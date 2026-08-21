@@ -132,21 +132,23 @@ public partial class MainWindow : Window
     void CopyCell()
     {
         if(DayGrid.CurrentCell.Item is not SessionRow row||DayGrid.CurrentCell.Column is null)return;
-        var value=CellValue(row,DayGrid.CurrentCell.Column.DisplayIndex);
+        var columnIndex=DayGrid.CurrentCell.Column.DisplayIndex;var value=CellValue(row,columnIndex);
         try{Clipboard.SetText(value??"");}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}
+        finally{RestoreCellFocus(row,columnIndex);}
     }
     void PasteCell()
     {
         if(DayGrid.CurrentCell.Item is not SessionRow row||DayGrid.CurrentCell.Column is null||DayGrid.CurrentCell.Column.IsReadOnly)return;
+        var column=DayGrid.CurrentCell.Column;var columnIndex=column.DisplayIndex;
         try
         {
             var value=Clipboard.ContainsText()?Clipboard.GetText().Split(new[]{'\r','\n','\t'},StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()??"":"";
-            var column=DayGrid.CurrentCell.Column;var before=Clone(row);SetCellValue(row,column.DisplayIndex,value);
+            var before=Clone(row);SetCellValue(row,columnIndex,value);
             if(!ValidInterval(row)){CopyValues(before,row);DayGrid.Items.Refresh();ShowTimeError();return;}
             if(!Same(before,row))PushRestore(row,before);_repo.Save(row);DayGrid.Items.Refresh();LoadWeek();
-            var target=new DataGridCellInfo(row,column);DayGrid.SelectedCells.Clear();DayGrid.CurrentCell=target;DayGrid.SelectedCells.Add(target);DayGrid.ScrollIntoView(row,column);DayGrid.Focus();
         }
         catch(Exception ex){MessageBox.Show($"No se pudo pegar: {ex.Message}","TimeTracker");}
+        finally{RestoreCellFocus(row,columnIndex);}
     }
     static string CellValue(SessionRow row,int column)=>column switch{0=>row.StartText,1=>row.EndText,2=>row.Project,3=>row.Epic,4=>row.Activity,5=>row.Comment,_=>row.Duration};
     static void SetCellValue(SessionRow row,int column,string value){switch(column){case 0:row.StartText=value;break;case 1:row.EndText=value;break;case 2:row.Project=value;break;case 3:row.Epic=value;break;case 4:row.Activity=value;break;case 5:row.Comment=value;break;}}
@@ -163,7 +165,27 @@ public partial class MainWindow : Window
         DayGrid.CommitEdit(DataGridEditingUnit.Cell,true);DayGrid.CommitEdit(DataGridEditingUnit.Row,true);
         Dispatcher.BeginInvoke(()=>{if(_undo.Count==0)return;_undoing=true;try{_undo.Pop()();}finally{_undoing=false;}});
     }
-    void SelectCell(SessionRow row,int columnIndex){var column=DayGrid.Columns.First(x=>x.DisplayIndex==columnIndex);var target=new DataGridCellInfo(row,column);DayGrid.SelectedCells.Clear();DayGrid.CurrentCell=target;DayGrid.SelectedCells.Add(target);DayGrid.ScrollIntoView(row,column);DayGrid.Focus();}
+    void RestoreCellFocus(SessionRow row,int columnIndex)=>Dispatcher.BeginInvoke(DispatcherPriority.Input,new Action(()=>SelectCell(row,columnIndex)));
+    void SelectCell(SessionRow row,int columnIndex)
+    {
+        var column=DayGrid.Columns.FirstOrDefault(x=>x.DisplayIndex==columnIndex);if(column is null||!DayGrid.Items.Contains(row))return;
+        var target=new DataGridCellInfo(row,column);DayGrid.SelectedCells.Clear();DayGrid.CurrentCell=target;DayGrid.SelectedCells.Add(target);
+        DayGrid.ScrollIntoView(row,column);DayGrid.UpdateLayout();
+        if(DayGrid.ItemContainerGenerator.ContainerFromItem(row) is DataGridRow rowContainer&&FindCell(rowContainer,column) is DataGridCell cell)
+        {
+            cell.Focus();Keyboard.Focus(cell);return;
+        }
+        DayGrid.Focus();
+    }
+    static DataGridCell? FindCell(DependencyObject parent,DataGridColumn column)
+    {
+        for(var i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++)
+        {
+            var child=VisualTreeHelper.GetChild(parent,i);if(child is DataGridCell cell&&cell.Column==column)return cell;
+            if(FindCell(child,column) is DataGridCell nested)return nested;
+        }
+        return null;
+    }
     static SessionRow Clone(SessionRow s)=>new(){Id=s.Id,Start=s.Start,End=s.End,Project=s.Project,Epic=s.Epic,Activity=s.Activity,Comment=s.Comment};
     static void CopyValues(SessionRow source,SessionRow target){target.Start=source.Start;target.End=source.End;target.Project=source.Project;target.Epic=source.Epic;target.Activity=source.Activity;target.Comment=source.Comment;}
     static bool Same(SessionRow a,SessionRow b)=>a.Start==b.Start&&a.End==b.End&&a.Project==b.Project&&a.Epic==b.Epic&&a.Activity==b.Activity&&a.Comment==b.Comment;
