@@ -1,6 +1,131 @@
-<Window x:Class="TimeTracker.CalendarWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Configuración de calendarios" Width="1040" Height="840" MinWidth="900" MinHeight="650" WindowStartupLocation="CenterOwner" Background="#F7F7FB">
- <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid Margin="18"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <GroupBox BorderBrush="#B9B4F8" BorderThickness="2" Background="White" Padding="12"><GroupBox.Header><StackPanel Orientation="Horizontal"><TextBlock Text="1 · Plantillas semanales" FontSize="17" FontWeight="SemiBold"/><TextBlock x:Name="TemplateModeText" Foreground="#6D5DFB" FontWeight="SemiBold" Margin="18,3,0,0"/></StackPanel></GroupBox.Header><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="215"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="300"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Plantilla" VerticalAlignment="Center"/><ComboBox x:Name="TemplateBox" Grid.Column="1" DisplayMemberPath="Name" SelectionChanged="TemplateSelected"/><Button Grid.Column="2" Content="+ Nueva plantilla" Click="NewTemplateClick" HorizontalAlignment="Right"/></Grid><Grid Grid.Row="1" Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,18,0"><TextBlock Text="Nombre de la plantilla" FontWeight="SemiBold"/><TextBox x:Name="TemplateNameBox"/><Border Background="#F3F1FF" CornerRadius="5" Padding="10" Margin="4,10"><TextBlock Text="Define una semana tipo. Usa 8,5 u 8.5 horas y 0 para los días no laborables." TextWrapping="Wrap" Foreground="#555"/></Border></StackPanel><DataGrid x:Name="ScheduleDaysGrid" Grid.Column="1" AutoGenerateColumns="False" CanUserAddRows="False" CanUserResizeRows="False" RowHeight="24"><DataGrid.Columns><DataGridTextColumn Header="Día" Binding="{Binding Day}" IsReadOnly="True" Width="*"/><DataGridTextColumn Header="Horas" Binding="{Binding Hours}" Width="150"/></DataGrid.Columns></DataGrid></Grid><StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Eliminar plantilla" Click="DeleteTemplateClick"/><Button Content="Guardar plantilla" Click="SaveTemplateClick" Background="#6D5DFB" Foreground="White"/></StackPanel></Grid></GroupBox>
-  <GroupBox Grid.Row="2" MinHeight="390" BorderBrush="#79B8A4" BorderThickness="2" Background="White" Padding="12"><GroupBox.Header><StackPanel Orientation="Horizontal"><TextBlock Text="2 · Periodos del calendario" FontSize="17" FontWeight="SemiBold"/><TextBlock x:Name="PeriodModeText" Foreground="#27836A" FontWeight="SemiBold" Margin="18,3,0,0"/></StackPanel></GroupBox.Header><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="Asigna una plantilla a un intervalo recurrente. Fechas en formato dd/MM." Foreground="#555"/><Grid Grid.Row="1" Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="380"/></Grid.ColumnDefinitions><DataGrid x:Name="PeriodsGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="PeriodSelected" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"><DataGrid.Columns><DataGridTextColumn Header="Periodo" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Desde" Binding="{Binding StartText}" Width="72"/><DataGridTextColumn Header="Hasta" Binding="{Binding EndText}" Width="72"/><DataGridTextColumn Header="Plantilla" Binding="{Binding TemplateName}" Width="220"/></DataGrid.Columns></DataGrid><Border Grid.Column="1" Background="#F0F8F5" BorderBrush="#B8DCCF" BorderThickness="1" CornerRadius="6" Padding="12" Margin="16,0,0,0"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Text="Datos del periodo" FontSize="15" FontWeight="SemiBold"/><TextBlock Grid.Row="1" Text="Nombre" Margin="4,10,4,0"/><TextBox Grid.Row="2" x:Name="PeriodNameBox"/><Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Desde (dd/MM)"/><TextBox x:Name="PeriodStartBox"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="Hasta (dd/MM)"/><TextBox x:Name="PeriodEndBox"/></StackPanel></Grid><StackPanel Grid.Row="4"><TextBlock Text="Plantilla semanal"/><ComboBox x:Name="PeriodTemplateBox" DisplayMemberPath="Name" Height="30" Padding="6,2"/></StackPanel><StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0"><Button Content="Nuevo" Click="NewPeriodClick"/><Button Content="Eliminar" Click="DeletePeriodClick"/><Button Content="Guardar" Click="SavePeriodClick" Background="#27836A" Foreground="White"/></StackPanel></Grid></Border></Grid></Grid></GroupBox>
- </Grid></ScrollViewer>
+<Window x:Class="TimeTracker.CalendarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configuración de calendarios" Width="1080" Height="820" MinWidth="920" MinHeight="680"
+        WindowStartupLocation="CenterOwner">
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="72"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="22,0">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Border Width="38" Height="38" CornerRadius="9" Background="{StaticResource AccentSoft}" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons" FontSize="17" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <TextBlock Text="Calendarios y jornadas" FontSize="20" FontWeight="SemiBold"/>
+                    <TextBlock Text="Define semanas tipo y asígnalas a periodos recurrentes" Style="{StaticResource MutedText}" FontSize="12" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="20">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+                <Border Style="{StaticResource Card}" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="220"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Accent}" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Plantillas semanales" FontSize="18" FontWeight="SemiBold"/>
+                                <TextBlock Text="Configura las horas previstas para cada día de una semana tipo" Style="{StaticResource MutedText}" FontSize="12"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Background="{StaticResource AccentSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
+                                <TextBlock x:Name="TemplateModeText" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="12"/>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="310"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Plantilla" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="4,0,10,0"/>
+                            <ComboBox x:Name="TemplateBox" Grid.Column="1" DisplayMemberPath="Name" SelectionChanged="TemplateSelected"/>
+                            <Button Grid.Column="2" Content="+  Nueva plantilla" Click="NewTemplateClick" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Grid.Row="4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="330"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Border Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="Nombre de la plantilla" Style="{StaticResource MutedText}"/>
+                                    <TextBox x:Name="TemplateNameBox" Margin="0,5,0,0"/>
+                                    <Border Background="{StaticResource AccentSoft}" CornerRadius="7" Padding="12" Margin="0,14,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Cómo introducir las horas" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                            <TextBlock Text="Usa 8,5 u 8.5. Indica 0 en los días no laborables." TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                                <DataGrid x:Name="ScheduleDaysGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserResizeRows="False" RowHeight="25" MinRowHeight="25">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Día de la semana" Binding="{Binding Day}" IsReadOnly="True" Width="*"/>
+                                        <DataGridTextColumn Header="Horas" Binding="{Binding Hours}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+                        </Grid>
+
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                            <Button Content="Eliminar plantilla" Click="DeleteTemplateClick" Style="{StaticResource DangerButton}"/>
+                            <Button Content="Guardar plantilla" Click="SaveTemplateClick" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Style="{StaticResource Card}" Padding="18" MinHeight="360">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Success}" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Periodos del calendario" FontSize="18" FontWeight="SemiBold"/>
+                                <TextBlock Text="Asigna una plantilla a un intervalo recurrente · Fechas en formato dd/MM" Style="{StaticResource MutedText}" FontSize="12"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Background="{StaticResource SuccessSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
+                                <TextBlock x:Name="PeriodModeText" Foreground="{StaticResource Success}" FontWeight="SemiBold" FontSize="12"/>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="390"/></Grid.ColumnDefinitions>
+                            <Border BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                                <DataGrid x:Name="PeriodsGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="PeriodSelected" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Periodo" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Desde" Binding="{Binding StartText}" Width="76"/>
+                                        <DataGridTextColumn Header="Hasta" Binding="{Binding EndText}" Width="76"/>
+                                        <DataGridTextColumn Header="Plantilla" Binding="{Binding TemplateName}" Width="210"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <Border Grid.Column="2" Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="15">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <TextBlock Text="Datos del periodo" Style="{StaticResource SectionTitle}"/>
+                                    <TextBlock Grid.Row="1" Text="Nombre" Style="{StaticResource MutedText}" Margin="4,12,4,0"/>
+                                    <TextBox Grid.Row="2" x:Name="PeriodNameBox"/>
+                                    <Grid Grid.Row="3" Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="10"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                        <StackPanel><TextBlock Text="Desde (dd/MM)" Style="{StaticResource MutedText}" Margin="4,0"/><TextBox x:Name="PeriodStartBox"/></StackPanel>
+                                        <StackPanel Grid.Column="2"><TextBlock Text="Hasta (dd/MM)" Style="{StaticResource MutedText}" Margin="4,0"/><TextBox x:Name="PeriodEndBox"/></StackPanel>
+                                    </Grid>
+                                    <StackPanel Grid.Row="4" Margin="0,8,0,0"><TextBlock Text="Plantilla semanal" Style="{StaticResource MutedText}" Margin="4,0"/><ComboBox x:Name="PeriodTemplateBox" DisplayMemberPath="Name"/></StackPanel>
+                                    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                                        <Button Content="Nuevo" Click="NewPeriodClick"/>
+                                        <Button Content="Eliminar" Click="DeletePeriodClick" Style="{StaticResource DangerButton}"/>
+                                        <Button Content="Guardar" Click="SavePeriodClick" Style="{StaticResource PrimaryButton}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </Window>

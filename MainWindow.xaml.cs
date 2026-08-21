@@ -15,7 +15,18 @@ public partial class MainWindow : Window
     static readonly Brush[] ReportColors={new SolidColorBrush(Color.FromRgb(109,93,251)),new SolidColorBrush(Color.FromRgb(39,131,106)),new SolidColorBrush(Color.FromRgb(235,150,48)),new SolidColorBrush(Color.FromRgb(211,78,94)),new SolidColorBrush(Color.FromRgb(55,136,216)),new SolidColorBrush(Color.FromRgb(151,91,178)),new SolidColorBrush(Color.FromRgb(76,164,84)),new SolidColorBrush(Color.FromRgb(210,112,45))};
     public MainWindow(){InitializeComponent();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=MondayOf(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
     void RefreshAll(){_active=_repo.Active();RefreshClock();var recent=_repo.Recent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;LoadDay();LoadWeek();}
-    void RefreshClock(){_active=_repo.Active();if(_active is null){ActiveTitle.Text="Sin tarea activa";ActiveDetail.Text="Elige proyecto, épica y actividad";Clock.Text="00:00:00";return;}ActiveTitle.Text=$"{_active.Project} · {_active.Epic}";ActiveDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$"  —  {_active.Comment}");Clock.Text=((DateTime.Now-_active.Start) is var d)?$"{(int)d.TotalHours:00}:{d.Minutes:00}:{d.Seconds:00}":"";}
+    void RefreshClock()
+    {
+        _active=_repo.Active();
+        if(_active is null)
+        {
+            ActiveTitle.Text="Sin tarea activa";ActiveDetail.Text="Elige proyecto, épica y actividad";Clock.Text="00:00:00";
+            ActiveStateBadge.Visibility=Visibility.Collapsed;HeaderStatusText.Text="Sin tarea activa";HeaderStatusDot.Fill=Brushes.Gray;return;
+        }
+        ActiveTitle.Text=$"{_active.Project} · {_active.Epic}";ActiveDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$"  —  {_active.Comment}");
+        Clock.Text=((DateTime.Now-_active.Start) is var d)?$"{(int)d.TotalHours:00}:{d.Minutes:00}:{d.Seconds:00}":"";
+        ActiveStateBadge.Visibility=Visibility.Visible;HeaderStatusText.Text="Registrando";HeaderStatusDot.Fill=(Brush)FindResource("Success");
+    }
     void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Indica proyecto, épica y actividad.","TimeTracker");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());CommentBox.Clear();RefreshAll();}
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
