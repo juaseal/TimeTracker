@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+dist/
+work/
+data/
+.appdata/
+.localappdata/
+.packages/
+.nugetcache/
+*.user
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.pdb
