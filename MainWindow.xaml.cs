@@ -59,6 +59,9 @@ public partial class MainWindow : Window
     }
     static string FormatHours(double hours)=>SessionRow.Format(TimeSpan.FromHours(hours));
     static DateTime MondayOf(DateTime date)=>date.Date.AddDays(-((7+(int)date.DayOfWeek-1)%7));
+    void PreviousDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(-1);
+    void TodayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=DateTime.Today;
+    void NextDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(1);
     void LoadWeek(){var monday=MondayOf(WeekPicker.SelectedDate??DateTime.Today);WeekNumberText.Text=$"Semana {ISOWeek.GetWeekOfYear(monday)} · {monday:dd/MM}–{monday.AddDays(6):dd/MM}";var rows=_repo.Week(monday);ApplyDailySummaries(rows);var view=CollectionViewSource.GetDefaultView(rows);view.GroupDescriptions.Clear();view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SummaryRow.DayText)));WeekGrid.ItemsSource=view;}
     void ApplyDailySummaries(IEnumerable<SummaryRow> source)
     {
@@ -201,10 +204,13 @@ public partial class MainWindow : Window
         DayGrid.CommitEdit(DataGridEditingUnit.Cell,true);DayGrid.CommitEdit(DataGridEditingUnit.Row,true);
         var row=DayGrid.CurrentCell.Item as SessionRow??DayGrid.SelectedItem as SessionRow??DayGrid.SelectedCells.Select(x=>x.Item).OfType<SessionRow>().FirstOrDefault();
         if(row is null){MessageBox.Show("Selecciona una celda de la fila que quieres eliminar.","TimeTracker");return;}
-        if(MessageBox.Show("¿Eliminar esta sesión?","TimeTracker",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
         var copy=Clone(row);_repo.Delete(row.Id);_undo.Push(()=>{copy.Id=0;_repo.Save(copy);LoadDay();LoadWeek();});LoadDay();LoadWeek();
     }
-    void CopyWeekClick(object s,RoutedEventArgs e){var rows=_repo.Week(WeekPicker.SelectedDate??DateTime.Today);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM"));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{x.TotalText}");b.AppendLine();}Clipboard.SetText(b.ToString());MessageBox.Show("Resumen copiado al portapapeles.","TimeTracker");}
+    void CopyWeekClick(object s,RoutedEventArgs e)
+    {
+        var rows=_repo.Week(WeekPicker.SelectedDate??DateTime.Today);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM"));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{x.TotalText}");b.AppendLine();}
+        try{Clipboard.SetText(b.ToString());}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}
+    }
     void OpenSettingsClick(object s,RoutedEventArgs e){new CalendarWindow(_repo){Owner=this}.ShowDialog();LoadDay();LoadWeek();}
     void TabsSelectionChanged(object s,SelectionChangedEventArgs e)
     {

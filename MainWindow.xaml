@@ -148,7 +148,12 @@
                             <Border Style="{StaticResource Card}" Padding="12">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <DatePicker x:Name="DayPicker" Width="142" SelectedDateChanged="DayChanged"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="&#xE72B;" ToolTip="Día anterior" Click="PreviousDayClick" Style="{StaticResource IconButton}"/>
+                                        <DatePicker x:Name="DayPicker" Width="142" SelectedDateChanged="DayChanged" Margin="4,0"/>
+                                        <Button Content="Hoy" ToolTip="Ir a hoy" Click="TodayClick" MinWidth="58" Margin="0,0,4,0"/>
+                                        <Button Content="&#xE72A;" ToolTip="Día siguiente" Click="NextDayClick" Style="{StaticResource IconButton}"/>
+                                    </StackPanel>
                                     <TextBlock Grid.Column="1" Text="Enter/F2 edita · Ctrl+Z deshace · Escribe 1020 para 10:20" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="14,0"/>
                                     <Border Grid.Column="2" Background="{StaticResource SurfaceMuted}" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
                                         <TextBlock x:Name="DayStatusText" FontSize="12" FontWeight="SemiBold"/>
