@@ -196,7 +196,14 @@ public partial class MainWindow : Window
         var row=new SessionRow{Start=start,End=start.AddMinutes(30),Project=recent?.Project??"",Epic=recent?.Epic??"",Activity=recent?.Activity??""};
         _repo.Save(row);rows.Add(row);_undo.Push(()=>{_repo.Delete(row.Id);rows.Remove(row);DayGrid.Items.Refresh();LoadWeek();});DayGrid.ItemsSource=rows;DayGrid.SelectedItem=row;DayGrid.ScrollIntoView(row);LoadWeek();
     }
-    void DeleteClick(object s,RoutedEventArgs e){if(DayGrid.SelectedItem is SessionRow row&&MessageBox.Show("¿Eliminar esta sesión?","TimeTracker",MessageBoxButton.YesNo)==MessageBoxResult.Yes){var copy=Clone(row);_repo.Delete(row.Id);_undo.Push(()=>{copy.Id=0;_repo.Save(copy);LoadDay();LoadWeek();});LoadDay();LoadWeek();}}
+    void DeleteClick(object s,RoutedEventArgs e)
+    {
+        DayGrid.CommitEdit(DataGridEditingUnit.Cell,true);DayGrid.CommitEdit(DataGridEditingUnit.Row,true);
+        var row=DayGrid.CurrentCell.Item as SessionRow??DayGrid.SelectedItem as SessionRow??DayGrid.SelectedCells.Select(x=>x.Item).OfType<SessionRow>().FirstOrDefault();
+        if(row is null){MessageBox.Show("Selecciona una celda de la fila que quieres eliminar.","TimeTracker");return;}
+        if(MessageBox.Show("¿Eliminar esta sesión?","TimeTracker",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+        var copy=Clone(row);_repo.Delete(row.Id);_undo.Push(()=>{copy.Id=0;_repo.Save(copy);LoadDay();LoadWeek();});LoadDay();LoadWeek();
+    }
     void CopyWeekClick(object s,RoutedEventArgs e){var rows=_repo.Week(WeekPicker.SelectedDate??DateTime.Today);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM"));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{x.TotalText}");b.AppendLine();}Clipboard.SetText(b.ToString());MessageBox.Show("Resumen copiado al portapapeles.","TimeTracker");}
     void OpenSettingsClick(object s,RoutedEventArgs e){new CalendarWindow(_repo){Owner=this}.ShowDialog();LoadDay();LoadWeek();}
     void TabsSelectionChanged(object s,SelectionChangedEventArgs e)
