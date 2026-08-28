@@ -1,7 +1,7 @@
 <Window x:Class="TimeTracker.CalendarWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Configuración de calendarios" Width="1080" Height="820" MinWidth="920" MinHeight="680"
+        Title="Configuración de TimeTracker" Width="1080" Height="820" MinWidth="920" MinHeight="680"
         WindowStartupLocation="CenterOwner">
     <Grid>
         <Grid.RowDefinitions><RowDefinition Height="72"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -12,17 +12,59 @@
                     <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons" FontSize="17" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <TextBlock Text="Calendarios y jornadas" FontSize="20" FontWeight="SemiBold"/>
-                    <TextBlock Text="Define semanas tipo y asígnalas a periodos recurrentes" Style="{StaticResource MutedText}" FontSize="12" Margin="0,3,0,0"/>
+                    <TextBlock Text="Configuración" FontSize="20" FontWeight="SemiBold"/>
+                    <TextBlock Text="Personaliza la aplicación, las semanas tipo y los periodos recurrentes" Style="{StaticResource MutedText}" FontSize="12" Margin="0,3,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="20">
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
                 <Border Style="{StaticResource Card}" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Accent}" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Preferencias de visualización" FontSize="18" FontWeight="SemiBold"/>
+                                <TextBlock Text="Configura el periodo semanal y el contenido de cada tarea reciente" Style="{StaticResource MutedText}" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock x:Name="PreferencesStatusText" Grid.Column="2" Foreground="{StaticResource Success}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Border Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="Inicio de la semana" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Todas las vistas semanales abarcarán siete días desde el día elegido." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,10"/>
+                                    <ComboBox x:Name="WeekStartBox" DisplayMemberPath="Name" SelectedValuePath="Value"/>
+                                    <TextBlock Text="Ejemplo: Viernes crea periodos de viernes a jueves." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <Grid Grid.Column="2">
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="150"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <TextBlock Text="Campos de Recientes · selecciona una fila para cambiar su posición" Style="{StaticResource MutedText}" Margin="4,0,0,6"/>
+                                <DataGrid x:Name="RecentFieldsGrid" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" SelectionUnit="FullRow">
+                                    <DataGrid.Columns>
+                                        <DataGridCheckBoxColumn Header="Visible" Binding="{Binding IsVisible, UpdateSourceTrigger=PropertyChanged}" Width="72"/>
+                                        <DataGridTextColumn Header="Campo" Binding="{Binding Label}" IsReadOnly="True" Width="*"/>
+                                        <DataGridCheckBoxColumn Header="Negrita" Binding="{Binding IsBold, UpdateSourceTrigger=PropertyChanged}" Width="72"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                    <Button Content="↑  Subir" Click="MoveFieldUpClick"/>
+                                    <Button Content="↓  Bajar" Click="MoveFieldDownClick"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                        <Button Grid.Row="3" Content="Guardar preferencias" Click="SavePreferencesClick" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Style="{StaticResource Card}" Padding="18">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="220"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
@@ -75,7 +117,7 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="2" Style="{StaticResource Card}" Padding="18" MinHeight="360">
+                <Border Grid.Row="4" Style="{StaticResource Card}" Padding="18" MinHeight="360">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                         <Grid>

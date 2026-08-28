@@ -37,3 +37,7 @@ La base de datos se crea en `data/timetracker.db`, junto al ejecutable. La carpe
 3. Pulsa **Publicar**.
 
 El perfil genera un único `TimeTracker.exe` autocontenido en `bin\Release\net10.0-windows\win-x64\publish`. No necesita instalar .NET en el equipo de destino.
+
+
+dotnet restore .\TimeTracker.csproj -r win-x64
+dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\win-x64-modern-ui

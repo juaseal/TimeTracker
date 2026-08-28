@@ -3,7 +3,44 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 namespace TimeTracker;
-public sealed class ActivitySuggestion { public long Id { get; set; } public string Project { get; set; } = ""; public string Epic { get; set; } = ""; public string Activity { get; set; } = ""; public string Display => $"{Epic} · {Activity}"; }
+public sealed class ActivitySuggestion
+{
+    public long Id { get; set; }
+    public string Project { get; set; } = "";
+    public string Epic { get; set; } = "";
+    public string Activity { get; set; } = "";
+    public string Comment { get; set; } = "";
+    public DateTime Start { get; set; }
+    public DateTime? End { get; set; }
+    public string Display => $"{Epic} · {Activity}";
+    public string TimeText => $"{Start:dd/MM/yyyy HH:mm} – {(End is null ? "en curso" : End.Value.ToString("HH:mm"))}";
+    public string CommentText => string.IsNullOrWhiteSpace(Comment) ? "Sin comentario" : Comment;
+    public List<RecentDisplayField> DisplayFields { get; set; } = new();
+}
+public sealed class RecentDisplayField
+{
+    public string Text { get; set; } = "";
+    public System.Windows.FontWeight FontWeight { get; set; } = System.Windows.FontWeights.Normal;
+}
+public sealed class RecentFieldSetting : INotifyPropertyChanged
+{
+    bool _isVisible; bool _isBold;
+    public string FieldKey { get; set; } = "";
+    public string Label { get; set; } = "";
+    public int Order { get; set; }
+    public bool IsVisible { get=>_isVisible; set{_isVisible=value;Changed();} }
+    public bool IsBold { get=>_isBold; set{_isBold=value;Changed();} }
+    public event PropertyChangedEventHandler? PropertyChanged;
+    void Changed([CallerMemberName]string? name=null)=>PropertyChanged?.Invoke(this,new(name));
+}
+public sealed class WeekStartOption { public int Value { get; set; } public string Name { get; set; } = ""; }
+public sealed class WeekSummaryRow
+{
+    public string Project { get; set; } = "";
+    public string Epic { get; set; } = "";
+    public string ProjectEpic => $"{Project} - {Epic}";
+    public string[] DayHours { get; set; } = new string[7];
+}
 public sealed class SessionRow
 {
     public long Id { get; set; }

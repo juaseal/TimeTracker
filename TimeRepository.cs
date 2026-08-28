@@ -45,10 +45,18 @@ public sealed class TimeRepository
         CREATE TABLE IF NOT EXISTS calendar_periods(id INTEGER PRIMARY KEY, name TEXT NOT NULL, start_mmdd TEXT NOT NULL, end_mmdd TEXT NOT NULL, template_id INTEGER NOT NULL, FOREIGN KEY(template_id) REFERENCES schedule_templates(id));
         CREATE INDEX IF NOT EXISTS ix_calendar_periods_template ON calendar_periods(template_id);
         CREATE TABLE IF NOT EXISTS weekly_adjustments(day TEXT NOT NULL, project TEXT NOT NULL, epic TEXT NOT NULL, hours REAL NOT NULL, PRIMARY KEY(day,project,epic));
+        CREATE TABLE IF NOT EXISTS app_settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS recent_field_settings(field_key TEXT PRIMARY KEY, display_order INTEGER NOT NULL, is_visible INTEGER NOT NULL, is_bold INTEGER NOT NULL);
+        INSERT OR IGNORE INTO app_settings(key,value) VALUES('week_start_day','1');
+        INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('activity',0,1,1);
+        INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('project',1,1,0);
+        INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('epic',2,1,0);
+        INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('comment',3,1,0);
+        INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('time',4,1,0);
         DELETE FROM weekly_adjustments WHERE ABS(hours) < 0.000000001;
         DELETE FROM calendar_periods WHERE NOT EXISTS(SELECT 1 FROM schedule_templates WHERE id=calendar_periods.template_id);
         DELETE FROM schedule_template_days WHERE NOT EXISTS(SELECT 1 FROM schedule_templates WHERE id=schedule_template_days.template_id);
-        PRAGMA user_version=2;
+        PRAGMA user_version=3;
         PRAGMA optimize;
         """; cmd.ExecuteNonQuery();
         SeedCalendar(c);
@@ -83,9 +91,9 @@ public sealed class TimeRepository
     {
         using var c=Open();using var q=c.CreateCommand();
         q.CommandText=string.IsNullOrWhiteSpace(project)
-            ? "SELECT MAX(id),project,epic,activity FROM sessions GROUP BY project,epic,activity ORDER BY MAX(start) DESC LIMIT 12"
-            : "SELECT MAX(id),project,epic,activity FROM sessions WHERE project=$p GROUP BY project,epic,activity ORDER BY MAX(start) DESC LIMIT 12";
-        q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3)});return x;
+            ? "SELECT id,project,epic,activity,comment,start,end FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions) WHERE position=1 ORDER BY start DESC LIMIT 50"
+            : "SELECT id,project,epic,activity,comment,start,end FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions WHERE project=$p) WHERE position=1 ORDER BY start DESC LIMIT 50";
+        q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6))});return x;
     }
     public List<SessionRow> Day(DateTime day){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT id,project,epic,activity,comment,start,end FROM sessions WHERE start >= $a AND start < $b ORDER BY start";q.Parameters.AddWithValue("$a",day.Date.ToString("O"));q.Parameters.AddWithValue("$b",day.Date.AddDays(1).ToString("O"));using var r=q.ExecuteReader();var x=new List<SessionRow>();while(r.Read())x.Add(Read(r));return x;}
     public void Save(SessionRow s)
@@ -98,11 +106,11 @@ public sealed class TimeRepository
         s.Id=Convert.ToInt64(q.ExecuteScalar());
     }
     public void Delete(long id){using var c=Open();using var q=c.CreateCommand();q.CommandText="DELETE FROM sessions WHERE id=$id";q.Parameters.AddWithValue("$id",id);q.ExecuteNonQuery();}
-    public List<SummaryRow> Week(DateTime day)
+    public List<SummaryRow> Week(DateTime weekStart)
     {
-        var monday=day.Date.AddDays(-((7+(int)day.DayOfWeek-1)%7));var nextMonday=monday.AddDays(7);var result=new Dictionary<(DateTime,string,string),TimeSpan>();
-        foreach(var s in Range(monday,nextMonday)){var end=s.End??DateTime.Now;var cursor=s.Start<monday?monday:s.Start;if(end>nextMonday)end=nextMonday;while(cursor<end){var boundary=cursor.Date.AddDays(1);var piece=end<boundary?end:boundary;var key=(cursor.Date,s.Project,s.Epic);result[key]=result.GetValueOrDefault(key)+(piece-cursor);cursor=piece;}}
-        var adjustments=Adjustments(monday,nextMonday);
+        var start=weekStart.Date;var endExclusive=start.AddDays(7);var result=new Dictionary<(DateTime,string,string),TimeSpan>();
+        foreach(var s in Range(start,endExclusive)){var end=s.End??DateTime.Now;var cursor=s.Start<start?start:s.Start;if(end>endExclusive)end=endExclusive;while(cursor<end){var boundary=cursor.Date.AddDays(1);var piece=end<boundary?end:boundary;var key=(cursor.Date,s.Project,s.Epic);result[key]=result.GetValueOrDefault(key)+(piece-cursor);cursor=piece;}}
+        var adjustments=Adjustments(start,endExclusive);
         return result.OrderBy(x=>x.Key.Item1).ThenBy(x=>x.Key.Item2).Select(x=>new SummaryRow{Day=x.Key.Item1,Project=x.Key.Item2,Epic=x.Key.Item3,Registered=x.Value,Added=adjustments.GetValueOrDefault((x.Key.Item1,x.Key.Item2,x.Key.Item3))}).ToList();
     }
     Dictionary<(DateTime,string,string),double> Adjustments(DateTime a,DateTime b){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT day,project,epic,hours FROM weekly_adjustments WHERE day >= $a AND day < $b";q.Parameters.AddWithValue("$a",a.ToString("yyyy-MM-dd"));q.Parameters.AddWithValue("$b",b.ToString("yyyy-MM-dd"));using var r=q.ExecuteReader();var x=new Dictionary<(DateTime,string,string),double>();while(r.Read())x[(DateTime.Parse(r.GetString(0)),r.GetString(1),r.GetString(2))]=r.GetDouble(3);return x;}
@@ -120,11 +128,25 @@ public sealed class TimeRepository
     }
     public List<WeekDayTotal> WeekDayTotals(DateTime day)
     {
-        var monday=day.Date.AddDays(-((7+(int)day.DayOfWeek-1)%7));var summary=Week(day);return Enumerable.Range(0,7).Select(offset=>{var date=monday.AddDays(offset);return new WeekDayTotal{Day=date,Total=TimeSpan.FromHours(summary.Where(x=>x.Day==date).Sum(x=>x.Registered.TotalHours+x.Added)),ExpectedHours=ExpectedHours(date)};}).ToList();
+        var start=day.Date;var summary=Week(start);return Enumerable.Range(0,7).Select(offset=>{var date=start.AddDays(offset);return new WeekDayTotal{Day=date,Total=TimeSpan.FromHours(summary.Where(x=>x.Day==date).Sum(x=>x.Registered.TotalHours+x.Added)),ExpectedHours=ExpectedHours(date)};}).ToList();
     }
     public List<ReportSlice> Report(DateTime from,DateTime to,string? project=null,string? epic=null,string? activity=null)
     {
         var endExclusive=to.Date.AddDays(1);var sessions=Range(from.Date,endExclusive);var grouped=sessions.Where(x=>(project is null||x.Project==project)&&(epic is null||x.Epic==epic)&&(activity is null||x.Activity==activity)).Select(x=>{var clippedStart=x.Start>from.Date?x.Start:from.Date;var sessionEnd=x.End??DateTime.Now;var clippedEnd=sessionEnd<endExclusive?sessionEnd:endExclusive;return new{Session=x,Hours=Math.Max(0d,(clippedEnd-clippedStart).TotalHours)};}).Where(x=>x.Hours>0).GroupBy(x=>project is null?x.Session.Project:epic is null?x.Session.Epic:activity is null?x.Session.Activity:x.Session.Comment).Select(g=>new ReportSlice{Label=string.IsNullOrWhiteSpace(g.Key)?activity is null?"Sin especificar":"Sin comentario":g.Key,Hours=g.Sum(x=>x.Hours)}).OrderByDescending(x=>x.Hours).ToList();var total=grouped.Sum(x=>x.Hours);foreach(var item in grouped)item.Percentage=total<=0?0:item.Hours/total*100;return grouped;
+    }
+    public int WeekStartDay()
+    {
+        using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT value FROM app_settings WHERE key='week_start_day'";return q.ExecuteScalar() is { } value&&int.TryParse(value.ToString(),out var day)&&day is >=1 and <=7?day:1;
+    }
+    public List<RecentFieldSetting> RecentFieldSettings()
+    {
+        var labels=new Dictionary<string,string>{{"project","Proyecto"},{"epic","Épica"},{"activity","Actividad"},{"comment","Comentario"},{"time","Fecha y horario"}};
+        using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT field_key,display_order,is_visible,is_bold FROM recent_field_settings ORDER BY display_order";using var r=q.ExecuteReader();var result=new List<RecentFieldSetting>();while(r.Read()){var key=r.GetString(0);if(labels.TryGetValue(key,out var label))result.Add(new(){FieldKey=key,Label=label,Order=r.GetInt32(1),IsVisible=r.GetInt32(2)!=0,IsBold=r.GetInt32(3)!=0});}return result;
+    }
+    public void SavePreferences(int weekStartDay,IEnumerable<RecentFieldSetting> fields)
+    {
+        using var c=Open();using var tx=c.BeginTransaction();using(var setting=c.CreateCommand()){setting.Transaction=tx;setting.CommandText="INSERT INTO app_settings(key,value) VALUES('week_start_day',$value) ON CONFLICT(key) DO UPDATE SET value=$value";setting.Parameters.AddWithValue("$value",Math.Clamp(weekStartDay,1,7).ToString());setting.ExecuteNonQuery();}
+        var order=0;foreach(var field in fields){using var q=c.CreateCommand();q.Transaction=tx;q.CommandText="INSERT INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES($key,$order,$visible,$bold) ON CONFLICT(field_key) DO UPDATE SET display_order=$order,is_visible=$visible,is_bold=$bold";q.Parameters.AddWithValue("$key",field.FieldKey);q.Parameters.AddWithValue("$order",order++);q.Parameters.AddWithValue("$visible",field.IsVisible?1:0);q.Parameters.AddWithValue("$bold",field.IsBold?1:0);q.ExecuteNonQuery();}tx.Commit();
     }
     public List<ScheduleTemplate> Templates(){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT id,name FROM schedule_templates ORDER BY name";using var r=q.ExecuteReader();var x=new List<ScheduleTemplate>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Name=r.GetString(1)});return x;}
     public List<ScheduleDay> TemplateDays(long id)
