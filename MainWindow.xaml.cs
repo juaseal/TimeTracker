@@ -11,9 +11,10 @@ using System.Windows.Threading;
 namespace TimeTracker;
 public partial class MainWindow : Window
 {
-    readonly TimeRepository _repo=new(); readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; List<RecentFieldSetting> _recentFieldSettings=new();
+    readonly TimeRepository _repo; readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; List<RecentFieldSetting> _recentFieldSettings=new(); WidgetWindow? _widget;
     static readonly Brush[] ReportColors={new SolidColorBrush(Color.FromRgb(109,93,251)),new SolidColorBrush(Color.FromRgb(39,131,106)),new SolidColorBrush(Color.FromRgb(235,150,48)),new SolidColorBrush(Color.FromRgb(211,78,94)),new SolidColorBrush(Color.FromRgb(55,136,216)),new SolidColorBrush(Color.FromRgb(151,91,178)),new SolidColorBrush(Color.FromRgb(76,164,84)),new SolidColorBrush(Color.FromRgb(210,112,45))};
-    public MainWindow(){InitializeComponent();_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
+    public MainWindow():this(new TimeRepository()){}
+    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
     void ApplyRecentFields(IEnumerable<ActivitySuggestion> recent)
     {
         foreach(var item in recent)item.DisplayFields=_recentFieldSettings.Where(x=>x.IsVisible).OrderBy(x=>x.Order).Select(x=>new RecentDisplayField{Text=x.FieldKey switch{"project"=>item.Project,"epic"=>item.Epic,"activity"=>item.Activity,"comment"=>item.CommentText,"time"=>item.TimeText,_=>""},FontWeight=x.IsBold?FontWeights.Bold:FontWeights.Normal}).ToList();
@@ -32,6 +33,10 @@ public partial class MainWindow : Window
         Clock.Text=((DateTime.Now-_active.Start) is var d)?$"{(int)d.TotalHours:00}:{d.Minutes:00}:{d.Seconds:00}":"";
         ActiveStateBadge.Visibility=Visibility.Visible;HeaderStatusText.Text="Registrando";HeaderStatusDot.Fill=(Brush)FindResource("Success");
     }
+    void OpenWidgetClick(object s,RoutedEventArgs e)=>OpenWidget();
+    void OpenWidget(){if(_widget?.IsVisible==true){_widget.Activate();return;}_widget=new WidgetWindow(_repo,this);_widget.Closed+=(_,_)=>_widget=null;_widget.Show();Hide();}
+    internal void ShowWidgetAtStartup()=>OpenWidget();
+    public void RefreshFromWidget(){RefreshAll();RefreshReport();}
     void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Indica proyecto, épica y actividad.","TimeTracker");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
@@ -273,13 +278,14 @@ public partial class MainWindow : Window
     static void CopyToClipboard(string text){try{Clipboard.SetText(text);}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}}
     void ShowSettings()
     {
-        new CalendarWindow(_repo){Owner=this}.ShowDialog();_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();RefreshRecent();LoadDay();var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);if(WeekPicker.SelectedDate?.Date!=start)WeekPicker.SelectedDate=start;else LoadWeek();
+        new CalendarWindow(_repo){Owner=this}.ShowDialog();AppearanceManager.Apply(AppearanceManager.Load(_repo));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();RefreshRecent();LoadDay();var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);if(WeekPicker.SelectedDate?.Date!=start)WeekPicker.SelectedDate=start;else LoadWeek();RefreshReport();
     }
     void OpenSettingsClick(object s,RoutedEventArgs e)=>ShowSettings();
     void TabsSelectionChanged(object s,SelectionChangedEventArgs e)
     {
         if(SettingsTab is null||Tabs.SelectedItem!=SettingsTab){if(Tabs.SelectedIndex>=0)_lastMainTabIndex=Tabs.SelectedIndex;return;}if(_openingSettings)return;_openingSettings=true;Tabs.SelectedIndex=Math.Clamp(_lastMainTabIndex,0,3);ShowSettings();_openingSettings=false;
-    }    void ReportDatesChanged(object s,SelectionChangedEventArgs e){if(IsLoaded)RefreshReport();}
+    }
+    void ReportDatesChanged(object s,SelectionChangedEventArgs e){if(IsLoaded)RefreshReport();}
     void RefreshReportClick(object s,RoutedEventArgs e)=>RefreshReport();
     void RefreshReport()
     {
@@ -299,8 +305,8 @@ public partial class MainWindow : Window
             var color=ReportColors[i%ReportColors.Length];shape.Fill=color;shape.Stroke=Brushes.White;shape.StrokeThickness=2;shape.Tag=slice;shape.Cursor=Cursors.Hand;shape.ToolTip=$"{slice.Label}: {slice.HoursText} ({slice.PercentageText})";ReportPie.Children.Add(shape);if(i<14){var edge=PointOnCircle(cx,cy,r,mid);var radians=mid*Math.PI/180;labels.Add((slice,mid,Math.Cos(radians)>=0,cy+(r+24)*Math.Sin(radians),edge,color));}angle+=sweep;
         }
         DrawPieLabels(labels.Where(x=>!x.Right).OrderBy(x=>x.Y),false);DrawPieLabels(labels.Where(x=>x.Right).OrderBy(x=>x.Y),true);
-        var hole=new Ellipse{Width=130,Height=130,Fill=Brushes.White,IsHitTestVisible=false};Canvas.SetLeft(hole,cx-65);Canvas.SetTop(hole,cy-65);ReportPie.Children.Add(hole);
-        var totalText=new TextBlock{Text=$"Total\n{SessionRow.Format(TimeSpan.FromHours(total))}",TextAlignment=TextAlignment.Center,FontSize=18,FontWeight=FontWeights.SemiBold,Width=120,IsHitTestVisible=false};Canvas.SetLeft(totalText,cx-60);Canvas.SetTop(totalText,cy-28);ReportPie.Children.Add(totalText);
+        var hole=new Ellipse{Width=130,Height=130,Fill=(Brush)FindResource("Surface"),IsHitTestVisible=false};Canvas.SetLeft(hole,cx-65);Canvas.SetTop(hole,cy-65);ReportPie.Children.Add(hole);
+        var totalText=new TextBlock{Text=$"Total\n{SessionRow.Format(TimeSpan.FromHours(total))}",TextAlignment=TextAlignment.Center,FontSize=18,FontWeight=FontWeights.SemiBold,Foreground=(Brush)FindResource("TextPrimary"),Width=120,IsHitTestVisible=false};Canvas.SetLeft(totalText,cx-60);Canvas.SetTop(totalText,cy-28);ReportPie.Children.Add(totalText);
     }
     void DrawPieLabels(IEnumerable<(ReportSlice Slice,double Mid,bool Right,double Y,Point Edge,Brush Color)> source,bool right)
     {

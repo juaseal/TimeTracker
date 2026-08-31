@@ -5,15 +5,15 @@
         WindowStartupLocation="CenterOwner">
     <Grid>
         <Grid.RowDefinitions><RowDefinition Height="72"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-        <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="22,0">
+        <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Padding="22,0">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <Border Width="38" Height="38" CornerRadius="9" Background="{StaticResource AccentSoft}" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons" FontSize="17" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="38" Height="38" CornerRadius="9" Background="{DynamicResource AccentSoft}" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons" FontSize="{DynamicResource FontSizeLarge}" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <TextBlock Text="Configuración" FontSize="20" FontWeight="SemiBold"/>
-                    <TextBlock Text="Personaliza la aplicación, las semanas tipo y los periodos recurrentes" Style="{StaticResource MutedText}" FontSize="12" Margin="0,3,0,0"/>
+                    <TextBlock Text="Configuración" FontSize="{DynamicResource FontSizeWindowTitle}" FontWeight="SemiBold"/>
+                    <TextBlock Text="Personaliza la aplicación, las semanas tipo y los periodos recurrentes" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="0,3,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -24,24 +24,24 @@
 
                 <Border Style="{StaticResource Card}" Padding="18">
                     <Grid>
-                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Accent}" Margin="0,0,10,0"/>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{DynamicResource Accent}" Margin="0,0,10,0"/>
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Preferencias de visualización" FontSize="18" FontWeight="SemiBold"/>
-                                <TextBlock Text="Configura el periodo semanal y el contenido de cada tarea reciente" Style="{StaticResource MutedText}" FontSize="12"/>
+                                <TextBlock Text="Preferencias de visualización" FontSize="{DynamicResource FontSizeCardTitle}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Configura el periodo semanal y el contenido de cada tarea reciente" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}"/>
                             </StackPanel>
-                            <TextBlock x:Name="PreferencesStatusText" Grid.Column="2" Foreground="{StaticResource Success}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="PreferencesStatusText" Grid.Column="2" Foreground="{DynamicResource Success}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </Grid>
                         <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Border Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                            <Border Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
                                 <StackPanel>
                                     <TextBlock Text="Inicio de la semana" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Todas las vistas semanales abarcarán siete días desde el día elegido." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,10"/>
+                                    <TextBlock Text="Todas las vistas semanales abarcarán siete días desde el día elegido." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="0,4,0,10"/>
                                     <ComboBox x:Name="WeekStartBox" DisplayMemberPath="Name" SelectedValuePath="Value"/>
-                                    <TextBlock Text="Ejemplo: Viernes crea periodos de viernes a jueves." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+                                    <TextBlock Text="Ejemplo: Viernes crea periodos de viernes a jueves." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
                             <Grid Grid.Column="2">
@@ -60,7 +60,42 @@
                                 </StackPanel>
                             </Grid>
                         </Grid>
-                        <Button Grid.Row="3" Content="Guardar preferencias" Click="SavePreferencesClick" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                        <Grid Grid.Row="4">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Border Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="Apariencia" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Tema" Style="{StaticResource MutedText}" Margin="4,9,4,0"/>
+                                    <ComboBox x:Name="ThemeBox">
+                                        <ComboBoxItem Tag="light" Content="Claro"/><ComboBoxItem Tag="dark" Content="Oscuro"/>
+                                    </ComboBox>
+                                    <TextBlock Text="Paleta de color" Style="{StaticResource MutedText}" Margin="4,6,4,0"/>
+                                    <ComboBox x:Name="PaletteBox">
+                                        <ComboBoxItem Tag="violet" Content="Violeta"/><ComboBoxItem Tag="blue" Content="Azul"/><ComboBoxItem Tag="green" Content="Verde"/><ComboBoxItem Tag="orange" Content="Naranja"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="Accesibilidad" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Tamaño de letra" Style="{StaticResource MutedText}" Margin="4,9,4,0"/>
+                                    <ComboBox x:Name="FontScaleBox">
+                                        <ComboBoxItem Tag="0.9" Content="Compacto (90 %)"/><ComboBoxItem Tag="1" Content="Normal (100 %)"/><ComboBoxItem Tag="1.15" Content="Grande (115 %)"/><ComboBoxItem Tag="1.3" Content="Muy grande (130 %)"/><ComboBoxItem Tag="1.5" Content="Máximo (150 %)"/>
+                                    </ComboBox>
+                                    <CheckBox x:Name="HighContrastBox" Content="Alto contraste" Margin="5,9,5,3" ToolTip="Aumenta el contraste de bordes y textos secundarios"/>
+                                    <CheckBox x:Name="ReducedMotionBox" Content="Reducir movimiento" Margin="5,3" ToolTip="Evita animaciones decorativas presentes o futuras"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="4" Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="Modo widget" FontWeight="SemiBold"/>
+                                    <CheckBox x:Name="StartInWidgetBox" Content="Arrancar en modo widget" Margin="5,10,5,3"/>
+                                    <CheckBox x:Name="AlwaysOnTopBox" Content="Mantener siempre visible" Margin="5,3"/>
+                                    <TextBlock Text="El widget recuerda su posición. Escape vuelve a la aplicación completa." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="5,9,5,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Button Grid.Row="5" Content="Guardar preferencias" Click="SavePreferencesClick" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Margin="0,12,0,0"/>
                     </Grid>
                 </Border>
 
@@ -69,13 +104,13 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="220"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Accent}" Margin="0,0,10,0"/>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{DynamicResource Accent}" Margin="0,0,10,0"/>
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Plantillas semanales" FontSize="18" FontWeight="SemiBold"/>
-                                <TextBlock Text="Configura las horas previstas para cada día de una semana tipo" Style="{StaticResource MutedText}" FontSize="12"/>
+                                <TextBlock Text="Plantillas semanales" FontSize="{DynamicResource FontSizeCardTitle}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Configura las horas previstas para cada día de una semana tipo" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}"/>
                             </StackPanel>
-                            <Border Grid.Column="2" Background="{StaticResource AccentSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
-                                <TextBlock x:Name="TemplateModeText" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="12"/>
+                            <Border Grid.Column="2" Background="{DynamicResource AccentSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
+                                <TextBlock x:Name="TemplateModeText" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeCaption}"/>
                             </Border>
                         </Grid>
 
@@ -88,19 +123,19 @@
 
                         <Grid Grid.Row="4">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="330"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Border Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
+                            <Border Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
                                 <StackPanel>
                                     <TextBlock Text="Nombre de la plantilla" Style="{StaticResource MutedText}"/>
                                     <TextBox x:Name="TemplateNameBox" Margin="0,5,0,0"/>
-                                    <Border Background="{StaticResource AccentSoft}" CornerRadius="7" Padding="12" Margin="0,14,0,0">
+                                    <Border Background="{DynamicResource AccentSoft}" CornerRadius="7" Padding="12" Margin="0,14,0,0">
                                         <StackPanel>
-                                            <TextBlock Text="Cómo introducir las horas" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                                            <TextBlock Text="Cómo introducir las horas" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"/>
                                             <TextBlock Text="Usa 8,5 u 8.5. Indica 0 en los días no laborables." TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Column="2" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                            <Border Grid.Column="2" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
                                 <DataGrid x:Name="ScheduleDaysGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserResizeRows="False" RowHeight="25" MinRowHeight="25">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Día de la semana" Binding="{Binding Day}" IsReadOnly="True" Width="*"/>
@@ -122,19 +157,19 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="14"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <Border Width="4" Height="28" CornerRadius="2" Background="{StaticResource Success}" Margin="0,0,10,0"/>
+                            <Border Width="4" Height="28" CornerRadius="2" Background="{DynamicResource Success}" Margin="0,0,10,0"/>
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Periodos del calendario" FontSize="18" FontWeight="SemiBold"/>
-                                <TextBlock Text="Asigna una plantilla a un intervalo recurrente · Fechas en formato dd/MM" Style="{StaticResource MutedText}" FontSize="12"/>
+                                <TextBlock Text="Periodos del calendario" FontSize="{DynamicResource FontSizeCardTitle}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Asigna una plantilla a un intervalo recurrente · Fechas en formato dd/MM" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}"/>
                             </StackPanel>
-                            <Border Grid.Column="2" Background="{StaticResource SuccessSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
-                                <TextBlock x:Name="PeriodModeText" Foreground="{StaticResource Success}" FontWeight="SemiBold" FontSize="12"/>
+                            <Border Grid.Column="2" Background="{DynamicResource SuccessSoft}" CornerRadius="10" Padding="10,4" VerticalAlignment="Center">
+                                <TextBlock x:Name="PeriodModeText" Foreground="{DynamicResource Success}" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeCaption}"/>
                             </Border>
                         </Grid>
 
                         <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="390"/></Grid.ColumnDefinitions>
-                            <Border BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                            <Border BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
                                 <DataGrid x:Name="PeriodsGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="PeriodSelected" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Periodo" Binding="{Binding Name}" Width="*"/>
@@ -145,7 +180,7 @@
                                 </DataGrid>
                             </Border>
 
-                            <Border Grid.Column="2" Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8" Padding="15">
+                            <Border Grid.Column="2" Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="15">
                                 <Grid>
                                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                     <TextBlock Text="Datos del periodo" Style="{StaticResource SectionTitle}"/>

@@ -138,6 +138,15 @@ public sealed class TimeRepository
     {
         using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT value FROM app_settings WHERE key='week_start_day'";return q.ExecuteScalar() is { } value&&int.TryParse(value.ToString(),out var day)&&day is >=1 and <=7?day:1;
     }
+    public string Setting(string key,string defaultValue="")
+    {
+        using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT value FROM app_settings WHERE key=$key";q.Parameters.AddWithValue("$key",key);return q.ExecuteScalar()?.ToString()??defaultValue;
+    }
+    public bool BoolSetting(string key,bool defaultValue=false)=>bool.TryParse(Setting(key),out var value)?value:defaultValue;
+    public void SaveSettings(IEnumerable<KeyValuePair<string,string>> settings)
+    {
+        using var c=Open();using var tx=c.BeginTransaction();foreach(var setting in settings){using var q=c.CreateCommand();q.Transaction=tx;q.CommandText="INSERT INTO app_settings(key,value) VALUES($key,$value) ON CONFLICT(key) DO UPDATE SET value=$value";q.Parameters.AddWithValue("$key",setting.Key);q.Parameters.AddWithValue("$value",setting.Value);q.ExecuteNonQuery();}tx.Commit();
+    }
     public List<RecentFieldSetting> RecentFieldSettings()
     {
         var labels=new Dictionary<string,string>{{"project","Proyecto"},{"epic","Épica"},{"activity","Actividad"},{"comment","Comentario"},{"time","Fecha y horario"}};

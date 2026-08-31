@@ -36,8 +36,8 @@ La base de datos se crea en `data/timetracker.db`, junto al ejecutable. La carpe
 2. Elige el perfil **Portable-win-x64**.
 3. Pulsa **Publicar**.
 
-El perfil genera un único `TimeTracker.exe` autocontenido en `bin\Release\net10.0-windows\win-x64\publish`. No necesita instalar .NET en el equipo de destino.
+El perfil genera `TimeTracker.exe` como un ejecutable único y autocontenido en `bin\Release\net10.0-windows\win-x64\publish`. No necesita instalar .NET en el equipo de destino. Las bibliotecas nativas están incluidas dentro del EXE y .NET las extrae automáticamente al arrancar.
 
 
 dotnet restore .\TimeTracker.csproj -r win-x64
-dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\win-x64-modern-ui
+dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\win-x64-single-file
