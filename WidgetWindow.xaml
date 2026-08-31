@@ -13,7 +13,7 @@
                 <Grid MouseLeftButtonDown="HeaderMouseDown" Cursor="SizeAll" AutomationProperties.Name="Mover widget">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Border Width="34" Height="34" CornerRadius="9" Background="{DynamicResource Accent}">
-                        <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons" FontSize="{DynamicResource FontSizeMedium}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path Data="{StaticResource ClockIcon}" Width="17" Height="17" Stretch="Uniform" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                         <TextBlock Text="TimeTracker" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeMedium}"/>

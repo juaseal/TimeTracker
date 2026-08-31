@@ -40,4 +40,4 @@ El perfil genera `TimeTracker.exe` como un ejecutable único y autocontenido en 
 
 
 dotnet restore .\TimeTracker.csproj -r win-x64
-dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\win-x64-single-file
+dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\main

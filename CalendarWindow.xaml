@@ -9,7 +9,7 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <Border Width="38" Height="38" CornerRadius="9" Background="{DynamicResource AccentSoft}" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE787;" FontFamily="Segoe Fluent Icons" FontSize="{DynamicResource FontSizeLarge}" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Path Data="{StaticResource CalendarIcon}" Width="19" Height="19" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
                     <TextBlock Text="Configuración" FontSize="{DynamicResource FontSizeWindowTitle}" FontWeight="SemiBold"/>

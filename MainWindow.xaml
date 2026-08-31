@@ -23,7 +23,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border Width="36" Height="36" CornerRadius="9" Background="{DynamicResource Accent}" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons" FontSize="{DynamicResource FontSizeLarge}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Path Data="{StaticResource ClockIcon}" Width="18" Height="18" Stretch="Uniform" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
                             <TextBlock Text="TimeTracker" FontSize="{DynamicResource FontSizeCardTitle}" FontWeight="SemiBold"/>
@@ -132,7 +132,7 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <TextBlock Grid.Column="1" Text="&#xE72A;" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                    <Path Grid.Column="1" Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                                 </Grid>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
@@ -154,10 +154,10 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Content="&#xE72B;" ToolTip="Día anterior" Click="PreviousDayClick" Style="{StaticResource IconButton}"/>
+                                        <Button ToolTip="Día anterior" Click="PreviousDayClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Día anterior"><Path Data="{StaticResource ChevronLeftIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                         <DatePicker x:Name="DayPicker" Width="142" SelectedDateChanged="DayChanged" Margin="4,0"/>
                                         <Button Content="Hoy" ToolTip="Ir a hoy" Click="TodayClick" MinWidth="58" Margin="0,0,4,0"/>
-                                        <Button Content="&#xE72A;" ToolTip="Día siguiente" Click="NextDayClick" Style="{StaticResource IconButton}"/>
+                                        <Button ToolTip="Día siguiente" Click="NextDayClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Día siguiente"><Path Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="Enter/F2 edita · Ctrl+Z deshace · Escribe 1020 para 10:20" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="14,0"/>
                                     <Border Grid.Column="2" Background="{DynamicResource SurfaceMuted}" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
@@ -196,10 +196,10 @@
                             <Border Style="{StaticResource Card}" Padding="12">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="150"/><ColumnDefinition Width="82"/><ColumnDefinition Width="44"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <Button Content="&#xE72B;" ToolTip="Periodo anterior" Click="PreviousWeekClick" Style="{StaticResource IconButton}"/>
+                                    <Button ToolTip="Periodo anterior" Click="PreviousWeekClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Periodo anterior"><Path Data="{StaticResource ChevronLeftIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     <DatePicker x:Name="WeekPicker" Grid.Column="1" SelectedDateChanged="WeekChanged"/>
                                     <Button Grid.Column="2" Content="Actual" ToolTip="Ir a la semana actual" Click="CurrentWeekClick" Width="72" MinWidth="0" Padding="10,8"/>
-                                    <Button Grid.Column="3" Content="&#xE72A;" ToolTip="Periodo siguiente" Click="NextWeekClick" Style="{StaticResource IconButton}"/>
+                                    <Button Grid.Column="3" ToolTip="Periodo siguiente" Click="NextWeekClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Periodo siguiente"><Path Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     <TextBlock x:Name="WeekNumberText" Grid.Column="4" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0"/>
                                     <TextBlock Grid.Column="5" Text="El periodo respeta el inicio de semana configurado" Style="{StaticResource MutedText}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
@@ -303,7 +303,7 @@
 
                     <TabItem x:Name="SettingsTab" ToolTip="Configuración">
                         <TabItem.Header>
-                            <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons" FontSize="{DynamicResource FontSizeSection}"/>
+                            <Path Data="{StaticResource SettingsIcon}" Width="17" Height="17" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
                         </TabItem.Header>
                     </TabItem>
                 </TabControl>
