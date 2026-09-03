@@ -47,6 +47,7 @@ public sealed class TimeRepository
         CREATE TABLE IF NOT EXISTS weekly_adjustments(day TEXT NOT NULL, project TEXT NOT NULL, epic TEXT NOT NULL, hours REAL NOT NULL, PRIMARY KEY(day,project,epic));
         CREATE TABLE IF NOT EXISTS app_settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS recent_field_settings(field_key TEXT PRIMARY KEY, display_order INTEGER NOT NULL, is_visible INTEGER NOT NULL, is_bold INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS favorite_activities(project TEXT NOT NULL, epic TEXT NOT NULL, activity TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(project,epic,activity));
         INSERT OR IGNORE INTO app_settings(key,value) VALUES('week_start_day','1');
         INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('activity',0,1,1);
         INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('project',1,1,0);
@@ -81,6 +82,8 @@ public sealed class TimeRepository
     }
     public void Start(string project,string epic,string activity,string comment)
     {
+        var active=Active();
+        if(active is not null&&string.Equals(active.Project,project,StringComparison.Ordinal)&&string.Equals(active.Epic,epic,StringComparison.Ordinal)&&string.Equals(active.Activity,activity,StringComparison.Ordinal)&&string.Equals(active.Comment,comment,StringComparison.Ordinal))return;
         var now=DateTime.Now; using var c=Open(); using var tx=c.BeginTransaction();
         using(var stop=c.CreateCommand()){stop.Transaction=tx;stop.CommandText="UPDATE sessions SET end=$now WHERE end IS NULL";stop.Parameters.AddWithValue("$now",now.ToString("O"));stop.ExecuteNonQuery();}
         using(var add=c.CreateCommand()){add.Transaction=tx;add.CommandText="INSERT INTO sessions(project,epic,activity,comment,start) VALUES($p,$e,$a,$c,$s)";add.Parameters.AddWithValue("$p",project);add.Parameters.AddWithValue("$e",epic);add.Parameters.AddWithValue("$a",activity);add.Parameters.AddWithValue("$c",comment);add.Parameters.AddWithValue("$s",now.ToString("O"));add.ExecuteNonQuery();}
@@ -91,9 +94,23 @@ public sealed class TimeRepository
     {
         using var c=Open();using var q=c.CreateCommand();
         q.CommandText=string.IsNullOrWhiteSpace(project)
-            ? "SELECT id,project,epic,activity,comment,start,end FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions) WHERE position=1 ORDER BY start DESC LIMIT 50"
-            : "SELECT id,project,epic,activity,comment,start,end FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions WHERE project=$p) WHERE position=1 ORDER BY start DESC LIMIT 50";
-        q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6))});return x;
+            ? "SELECT s.id,s.project,s.epic,s.activity,s.comment,s.start,s.end,CASE WHEN f.project IS NULL THEN 0 ELSE 1 END FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions) s LEFT JOIN favorite_activities f ON f.project=s.project AND f.epic=s.epic AND f.activity=s.activity WHERE s.position=1 ORDER BY s.start DESC LIMIT 50"
+            : "SELECT s.id,s.project,s.epic,s.activity,s.comment,s.start,s.end,CASE WHEN f.project IS NULL THEN 0 ELSE 1 END FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions WHERE project=$p) s LEFT JOIN favorite_activities f ON f.project=s.project AND f.epic=s.epic AND f.activity=s.activity WHERE s.position=1 ORDER BY s.start DESC LIMIT 50";
+        q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6)),IsFavorite=r.GetInt32(7)!=0});return x;
+    }
+    public void SetFavorite(ActivitySuggestion item,bool favorite)
+    {
+        using var c=Open();using var q=c.CreateCommand();
+        q.CommandText=favorite
+            ? "INSERT OR IGNORE INTO favorite_activities(project,epic,activity,created_at) VALUES($p,$e,$a,$created)"
+            : "DELETE FROM favorite_activities WHERE project=$p AND epic=$e AND activity=$a";
+        q.Parameters.AddWithValue("$p",item.Project);q.Parameters.AddWithValue("$e",item.Epic);q.Parameters.AddWithValue("$a",item.Activity);q.Parameters.AddWithValue("$created",DateTime.Now.ToString("O"));q.ExecuteNonQuery();
+    }
+    public List<ActivitySuggestion> Favorites(string? project=null)
+    {
+        using var c=Open();using var q=c.CreateCommand();
+        q.CommandText="SELECT s.id,s.project,s.epic,s.activity,s.comment,s.start,s.end FROM favorite_activities f JOIN sessions s ON s.id=(SELECT id FROM sessions WHERE project=f.project AND epic=f.epic AND activity=f.activity ORDER BY start DESC,id DESC LIMIT 1) WHERE ($p='' OR f.project=$p) ORDER BY f.created_at DESC";
+        q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6)),IsFavorite=true});return x;
     }
     public List<SessionRow> Day(DateTime day){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT id,project,epic,activity,comment,start,end FROM sessions WHERE start >= $a AND start < $b ORDER BY start";q.Parameters.AddWithValue("$a",day.Date.ToString("O"));q.Parameters.AddWithValue("$b",day.Date.AddDays(1).ToString("O"));using var r=q.ExecuteReader();var x=new List<SessionRow>();while(r.Read())x.Add(Read(r));return x;}
     public void Save(SessionRow s)

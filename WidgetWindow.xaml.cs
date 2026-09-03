@@ -18,16 +18,23 @@ public partial class WidgetWindow : Window
     }
     void RefreshWidget()
     {
-        _active=_repo.Active();RefreshClock();_refreshing=true;try{WidgetRecentList.ItemsSource=_repo.Recent().Take(20).ToList();WidgetRecentList.SelectedItem=null;}finally{_refreshing=false;}
-    }
-    void RefreshClock()
+        _active=_repo.Active();RefreshClock();_refreshing=true;
+        try
+        {
+            var favorites=_repo.Favorites();var recent=_repo.Recent().Where(x=>!x.IsFavorite).Take(20).ToList();var items=favorites.Concat(recent).ToList();
+            if(favorites.Count>0&&recent.Count>0)items[favorites.Count].SeparatorThickness=new Thickness(0,1,0,0);
+            WidgetRecentList.ItemsSource=items;WidgetRecentList.SelectedItem=null;
+        }
+        finally{_refreshing=false;}
+    }    void RefreshClock()
     {
         _active=_repo.Active();if(_active is null){WidgetStateText.Text="SIN TAREA ACTIVA";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("TextSecondary");WidgetTitle.Text="Sin tarea activa";WidgetDetail.Text="Selecciona una tarea reciente";WidgetClock.Text="00:00:00";return;}
         WidgetStateText.Text="REGISTRANDO";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("Success");WidgetTitle.Text=$"{_active.Project} · {_active.Epic}";WidgetDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$" — {_active.Comment}");var elapsed=DateTime.Now-_active.Start;WidgetClock.Text=$"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
     }
-    void RecentSelected(object s,System.Windows.Controls.SelectionChangedEventArgs e){if(_refreshing||WidgetRecentList.SelectedItem is not ActivitySuggestion item)return;_repo.Start(item.Project,item.Epic,item.Activity,item.Comment);RefreshWidget();}
-    void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshWidget();}
-    void RefreshClick(object s,RoutedEventArgs e)=>RefreshWidget();
+    void RecentSelected(object s,System.Windows.Controls.SelectionChangedEventArgs e){if(_refreshing)return;}
+    ActivitySuggestion? SelectedTask()=>WidgetRecentList.SelectedItem as ActivitySuggestion;
+    void StartClick(object s,RoutedEventArgs e){if(SelectedTask() is not { } item)return;_repo.Start(item.Project,item.Epic,item.Activity,item.Comment);RefreshWidget();}
+    void FavoriteClick(object s,RoutedEventArgs e){if(s is not System.Windows.Controls.Button { Tag: ActivitySuggestion item })return;_repo.SetFavorite(item,!item.IsFavorite);RefreshWidget();e.Handled=true;}    void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshWidget();}
     void HeaderMouseDown(object s,MouseButtonEventArgs e){if(e.LeftButton==MouseButtonState.Pressed)DragMove();}
     void OpenFullClick(object s,RoutedEventArgs e)=>ReturnToMain();
     void WidgetKeyDown(object s,KeyEventArgs e){if(e.Key==Key.Escape){e.Handled=true;ReturnToMain();}}

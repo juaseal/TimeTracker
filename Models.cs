@@ -16,6 +16,9 @@ public sealed class ActivitySuggestion
     public string TimeText => $"{Start:dd/MM/yyyy HH:mm} – {(End is null ? "en curso" : End.Value.ToString("HH:mm"))}";
     public string CommentText => string.IsNullOrWhiteSpace(Comment) ? "Sin comentario" : Comment;
     public List<RecentDisplayField> DisplayFields { get; set; } = new();
+    public bool IsFavorite { get; set; }
+    public string FavoriteGlyph => IsFavorite ? "★" : "☆";
+    public System.Windows.Thickness SeparatorThickness { get; set; }
 }
 public sealed class RecentDisplayField
 {

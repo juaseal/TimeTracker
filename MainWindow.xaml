@@ -113,27 +113,22 @@
 
                             <Border Grid.Column="2" Grid.RowSpan="3" Style="{StaticResource Card}" Padding="14">
                                 <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                     <TextBlock Text="Recientes" Style="{StaticResource SectionTitle}" Margin="4,2"/>
-                                    <TextBlock Grid.Row="1" Text="Pulsa una tarea para continuarla" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="4,2,4,10"/>
+                                    <TextBlock Grid.Row="1" Text="Los favoritos aparecen primero · pulsa una tarea para continuarla" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="4,2,4,10" TextWrapping="Wrap"/>
                                     <ListBox x:Name="RecentList" Grid.Row="2" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                                    <ItemsControl ItemsSource="{Binding DisplayFields}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock Text="{Binding Text}" FontWeight="{Binding FontWeight}" FontSize="{DynamicResource FontSizeCaption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text}"/>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <Path Grid.Column="1" Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                </Grid>
+                                                <Border BorderBrush="{DynamicResource BorderStrong}" BorderThickness="{Binding SeparatorThickness}" Padding="0,4,0,0">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                        <Button Tag="{Binding}" Click="FavoriteClick" Content="{Binding FavoriteGlyph}" ToolTip="Añadir o quitar de favoritos" Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0" Padding="2" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                        <ItemsControl Grid.Column="1" ItemsSource="{Binding DisplayFields}">
+                                                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" FontWeight="{Binding FontWeight}" FontSize="{DynamicResource FontSizeCaption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text}"/></DataTemplate></ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <Path Grid.Column="2" Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                    </Grid>
+                                                </Border>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
@@ -201,7 +196,7 @@
                                     <Button Grid.Column="2" Content="Actual" ToolTip="Ir a la semana actual" Click="CurrentWeekClick" Width="72" MinWidth="0" Padding="10,8"/>
                                     <Button Grid.Column="3" ToolTip="Periodo siguiente" Click="NextWeekClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Periodo siguiente"><Path Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     <TextBlock x:Name="WeekNumberText" Grid.Column="4" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0"/>
-                                    <TextBlock Grid.Column="5" Text="El periodo respeta el inicio de semana configurado" Style="{StaticResource MutedText}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    <TextBlock x:Name="SapPolicyTextBlock" Grid.Column="5" Style="{StaticResource MutedText}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                 </Grid>
                             </Border>
                             <TabControl Grid.Row="2">

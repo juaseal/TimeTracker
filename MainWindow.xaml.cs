@@ -11,16 +11,20 @@ using System.Windows.Threading;
 namespace TimeTracker;
 public partial class MainWindow : Window
 {
-    readonly TimeRepository _repo; readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; List<RecentFieldSetting> _recentFieldSettings=new(); WidgetWindow? _widget;
+    readonly TimeRepository _repo; readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; bool _sapRoundingEnabled; int _sapRoundingMinutes=30; List<RecentFieldSetting> _recentFieldSettings=new(); WidgetWindow? _widget;
     static readonly Brush[] ReportColors={new SolidColorBrush(Color.FromRgb(109,93,251)),new SolidColorBrush(Color.FromRgb(39,131,106)),new SolidColorBrush(Color.FromRgb(235,150,48)),new SolidColorBrush(Color.FromRgb(211,78,94)),new SolidColorBrush(Color.FromRgb(55,136,216)),new SolidColorBrush(Color.FromRgb(151,91,178)),new SolidColorBrush(Color.FromRgb(76,164,84)),new SolidColorBrush(Color.FromRgb(210,112,45))};
     public MainWindow():this(new TimeRepository()){}
-    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
+    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
     void ApplyRecentFields(IEnumerable<ActivitySuggestion> recent)
     {
         foreach(var item in recent)item.DisplayFields=_recentFieldSettings.Where(x=>x.IsVisible).OrderBy(x=>x.Order).Select(x=>new RecentDisplayField{Text=x.FieldKey switch{"project"=>item.Project,"epic"=>item.Epic,"activity"=>item.Activity,"comment"=>item.CommentText,"time"=>item.TimeText,_=>""},FontWeight=x.IsBold?FontWeights.Bold:FontWeights.Normal}).ToList();
     }
-    void RefreshRecent(){var recent=_repo.Recent();ApplyRecentFields(recent);ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}
-    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
+    List<ActivitySuggestion> CombinedRecent(string? project=null)
+    {
+        var favorites=_repo.Favorites(project);var recent=_repo.Recent(project);ApplyRecentFields(favorites);ApplyRecentFields(recent);
+        var result=favorites.Concat(recent.Where(x=>!x.IsFavorite)).ToList();if(favorites.Count>0&&result.Count>favorites.Count)result[favorites.Count].SeparatorThickness=new Thickness(0,1,0,0);return result;
+    }
+    void RefreshRecent(){var recent=CombinedRecent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
     void RefreshClock()
     {
         _active=_repo.Active();
@@ -41,16 +45,20 @@ public partial class MainWindow : Window
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
     {
-        var p=ProjectBox.SelectedItem?.ToString()??ProjectBox.Text;var recent=_repo.Recent(p);
-        ApplyRecentFields(recent);RecentList.ItemsSource=recent;ActivityBox.ItemsSource=recent;EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
+        var p=ProjectBox.SelectedItem?.ToString()??ProjectBox.Text;var recent=CombinedRecent(p);
+        RecentList.ItemsSource=recent;ActivityBox.ItemsSource=recent;EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
         if(recent.FirstOrDefault() is { } last){EpicBox.Text=last.Epic;ActivityBox.SelectedItem=last;ActivityBox.Text=last.Activity;}
-    }
-    void RecentSelected(object s,SelectionChangedEventArgs e)
+    }    void RecentSelected(object s,SelectionChangedEventArgs e)
     {
-        if(RecentList.SelectedItem is not ActivitySuggestion x)return;
+        if(s is not ListBox list||list.SelectedItem is not ActivitySuggestion x)return;
         ProjectBox.Text=x.Project;EpicBox.Text=x.Epic;ActivityBox.SelectedItem=x;ActivityBox.Text=x.Activity;CommentBox.Text=x.Comment;
         _active=_repo.Active();if(_active is not null&&string.Equals(_active.Project,x.Project,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Epic,x.Epic,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Activity,x.Activity,StringComparison.OrdinalIgnoreCase))return;
         StartClick(s,new RoutedEventArgs());
+    }
+    void FavoriteClick(object s,RoutedEventArgs e)
+    {
+        if(s is not Button { Tag: ActivitySuggestion item })return;
+        _repo.SetFavorite(item,!item.IsFavorite);RefreshRecent();e.Handled=true;
     }
     void LoadDay()
     {
@@ -88,19 +96,22 @@ public partial class MainWindow : Window
         else{DayStatusText.Text=$"D{(char)0x00ED}a sin jornada configurada";DayStatusText.Foreground=Brushes.Gray;}
     }
     static string FormatHours(double hours)=>SessionRow.Format(TimeSpan.FromHours(hours));
+    void LoadRoundingPolicy(){_sapRoundingEnabled=_repo.BoolSetting("sap_rounding_enabled");_sapRoundingMinutes=int.TryParse(_repo.Setting("sap_rounding_minutes","30"),out var minutes)&&minutes is >=5 and <=30&&minutes%5==0?minutes:30;}
+    double RoundForSap(double hours){if(!_sapRoundingEnabled)return hours;var units=hours*60/_sapRoundingMinutes;return Math.Round(units,MidpointRounding.AwayFromZero)*_sapRoundingMinutes/60d;}
+    string SapPolicyText()=>_sapRoundingEnabled?$"SAP · redondeo a {_sapRoundingMinutes} min":"SAP · sin redondeo";
     DateTime StartOfWeek(DateTime date){var day=date.DayOfWeek==DayOfWeek.Sunday?7:(int)date.DayOfWeek;return date.Date.AddDays(-((7+day-_weekStartDay)%7));}
     void PreviousDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(-1);
     void TodayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=DateTime.Today;
     void NextDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(1);
     void LoadWeek()
     {
-        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);WeekNumberText.Text=$"Periodo · {start:dd/MM}–{start.AddDays(6):dd/MM}";var rows=_repo.Week(start);ApplyDailySummaries(rows);var view=CollectionViewSource.GetDefaultView(rows);view.GroupDescriptions.Clear();view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SummaryRow.DayText)));WeekGrid.ItemsSource=view;LoadWeekSummary(rows,start);
+        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);WeekNumberText.Text=$"Periodo · {start:dd/MM}–{start.AddDays(6):dd/MM}";SapPolicyTextBlock.Text=SapPolicyText();var rows=_repo.Week(start);ApplyDailySummaries(rows);var view=CollectionViewSource.GetDefaultView(rows);view.GroupDescriptions.Clear();view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SummaryRow.DayText)));WeekGrid.ItemsSource=view;LoadWeekSummary(rows,start);
     }
     void LoadWeekSummary(IReadOnlyList<SummaryRow> source,DateTime start)
     {
         while(WeekSummaryGrid.Columns.Count>2)WeekSummaryGrid.Columns.RemoveAt(1);
         for(var i=0;i<7;i++){var day=start.AddDays(i);var name=CultureInfo.GetCultureInfo("es-ES").TextInfo.ToTitleCase(day.ToString("dddd",CultureInfo.GetCultureInfo("es-ES")));WeekSummaryGrid.Columns.Insert(1+i,new DataGridTextColumn{Header=$"{name}\n{day:dd/MM}",Binding=new Binding($"DayHours[{i}]"){Mode=BindingMode.OneWay},Width=new DataGridLength(88),IsReadOnly=true});}
-        WeekSummaryGrid.ItemsSource=source.GroupBy(x=>new{x.Project,x.Epic}).OrderBy(x=>x.Key.Project).ThenBy(x=>x.Key.Epic).Select(group=>new WeekSummaryRow{Project=group.Key.Project,Epic=group.Key.Epic,DayHours=Enumerable.Range(0,7).Select(offset=>{var hours=group.Where(x=>x.Day==start.AddDays(offset)).Sum(x=>x.Registered.TotalHours+x.Added);return Math.Abs(hours)<0.0000001?"":hours.ToString("0.##",CultureInfo.CurrentCulture);}).ToArray()}).ToList();
+        WeekSummaryGrid.ItemsSource=source.GroupBy(x=>new{x.Project,x.Epic}).OrderBy(x=>x.Key.Project).ThenBy(x=>x.Key.Epic).Select(group=>new WeekSummaryRow{Project=group.Key.Project,Epic=group.Key.Epic,DayHours=Enumerable.Range(0,7).Select(offset=>{var hours=RoundForSap(group.Where(x=>x.Day==start.AddDays(offset)).Sum(x=>x.Registered.TotalHours+x.Added));return Math.Abs(hours)<0.0000001?"":hours.ToString("0.##",CultureInfo.CurrentCulture);}).ToArray()}).ToList();
     }
     void ApplyDailySummaries(IEnumerable<SummaryRow> source)
     {
@@ -265,7 +276,7 @@ public partial class MainWindow : Window
     }
     void CopyWeekClick(object s,RoutedEventArgs e)
     {
-        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);var rows=_repo.Week(start);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM",CultureInfo.GetCultureInfo("es-ES")));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{x.TotalText}");b.AppendLine();}CopyToClipboard(b.ToString());
+        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);var rows=_repo.Week(start);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM",CultureInfo.GetCultureInfo("es-ES")));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{SessionRow.Format(TimeSpan.FromHours(RoundForSap(x.Registered.TotalHours+x.Added)))}");b.AppendLine();}CopyToClipboard(b.ToString());
     }
     string WeekSummaryHeader(DateTime start)=>"Proyecto - Épica\t"+string.Join('\t',Enumerable.Range(0,7).Select(i=>start.AddDays(i).ToString("dddd dd/MM",CultureInfo.GetCultureInfo("es-ES"))));
     static string WeekSummaryLine(WeekSummaryRow row)=>CleanClipboardText(row.ProjectEpic)+"\t"+string.Join('\t',row.DayHours);
@@ -278,7 +289,7 @@ public partial class MainWindow : Window
     static void CopyToClipboard(string text){try{Clipboard.SetText(text);}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}}
     void ShowSettings()
     {
-        new CalendarWindow(_repo){Owner=this}.ShowDialog();AppearanceManager.Apply(AppearanceManager.Load(_repo));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();_recentFieldSettings=_repo.RecentFieldSettings();RefreshRecent();LoadDay();var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);if(WeekPicker.SelectedDate?.Date!=start)WeekPicker.SelectedDate=start;else LoadWeek();RefreshReport();
+        new CalendarWindow(_repo){Owner=this}.ShowDialog();AppearanceManager.Apply(AppearanceManager.Load(_repo));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();RefreshRecent();LoadDay();var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);if(WeekPicker.SelectedDate?.Date!=start)WeekPicker.SelectedDate=start;else LoadWeek();RefreshReport();
     }
     void OpenSettingsClick(object s,RoutedEventArgs e)=>ShowSettings();
     void TabsSelectionChanged(object s,SelectionChangedEventArgs e)

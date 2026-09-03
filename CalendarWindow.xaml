@@ -42,6 +42,19 @@
                                     <TextBlock Text="Todas las vistas semanales abarcarán siete días desde el día elegido." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="0,4,0,10"/>
                                     <ComboBox x:Name="WeekStartBox" DisplayMemberPath="Name" SelectedValuePath="Value"/>
                                     <TextBlock Text="Ejemplo: Viernes crea periodos de viernes a jueves." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="0,8,0,0"/>
+                                    <Separator Margin="0,14,0,10"/>
+                                    <TextBlock Text="Imputación en SAP" FontWeight="SemiBold"/>
+                                    <CheckBox x:Name="RoundSapBox" Content="Redondear las horas para SAP" Margin="5,8,5,4"/>
+                                    <TextBlock Text="Resolución" Style="{StaticResource MutedText}" Margin="4,4,4,0"/>
+                                    <ComboBox x:Name="RoundingMinutesBox" IsEnabled="{Binding IsChecked, ElementName=RoundSapBox}">
+                                        <ComboBoxItem Tag="5" Content="5 minutos"/>
+                                        <ComboBoxItem Tag="10" Content="10 minutos"/>
+                                        <ComboBoxItem Tag="15" Content="15 minutos"/>
+                                        <ComboBoxItem Tag="20" Content="20 minutos"/>
+                                        <ComboBoxItem Tag="25" Content="25 minutos"/>
+                                        <ComboBoxItem Tag="30" Content="30 minutos"/>
+                                    </ComboBox>
+                                    <TextBlock Text="Se redondea cada imputación diaria al incremento más cercano. El tiempo registrado no cambia." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
                             <Grid Grid.Column="2">

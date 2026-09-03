@@ -35,22 +35,28 @@
                 <Grid Grid.Row="3" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <Button Content="Detener" Click="StopClick" Style="{StaticResource DangerButton}" AutomationProperties.Name="Detener tarea activa"/>
-                    <Button Grid.Column="1" Content="Actualizar" Click="RefreshClick" AutomationProperties.Name="Actualizar widget"/>
+                    <Button Grid.Column="1" Content="Iniciar" Click="StartClick" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Iniciar tarea seleccionada"/>
                 </Grid>
 
                 <TextBlock Grid.Row="4" Text="Tareas recientes" FontWeight="SemiBold" Margin="4,10,4,4"/>
-                <ListBox x:Name="WidgetRecentList" Grid.Row="5" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Tareas recientes">
+                <ListBox x:Name="WidgetRecentList" Grid.Row="5" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Tareas favoritas y recientes">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Activity}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding Display}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding CommentText}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
+                            <Border BorderBrush="{DynamicResource BorderStrong}" BorderThickness="{Binding SeparatorThickness}" Padding="0,4,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Button Tag="{Binding}" Click="FavoriteClick" Content="{Binding FavoriteGlyph}" ToolTip="Añadir o quitar de favoritos" Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0" Padding="2" Margin="0,0,7,0"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Activity}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Display}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding CommentText}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
+                </ListBox>            </Grid>
+
         </Border>
     </Grid>
 </Window>
