@@ -4,13 +4,11 @@ namespace TimeTracker;
 public sealed class TimeRepository
 {
     readonly string _connection;
-    public TimeRepository()
+    public TimeRepository(string? databasePath=null)
     {
-        var dir = Path.Combine(AppContext.BaseDirectory, "data");
-        Directory.CreateDirectory(dir);
-        var database=Path.Combine(dir,"timetracker.db");
-        var previous=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"TimeTracker","timetracker.db");
-        if(!File.Exists(database)&&File.Exists(previous))File.Copy(previous,database);
+        var database=databasePath??AppPaths.DatabasePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(database))!);
+        if(databasePath is null)MigratePortableDatabase(database);
         _connection = new SqliteConnectionStringBuilder
         {
             DataSource=database,
@@ -22,7 +20,26 @@ public sealed class TimeRepository
         }.ToString();
         Initialize();
     }
-    SqliteConnection Open()
+    internal static void MigratePortableDatabase(string database,string? legacyPath=null)
+    {
+        var legacy=legacyPath??AppPaths.LegacyPortableDatabasePath;
+        if(!File.Exists(legacy)||string.Equals(Path.GetFullPath(database),Path.GetFullPath(legacy),StringComparison.OrdinalIgnoreCase))return;
+        static DateTime LastDatabaseWrite(string path)
+        {
+            var latest=File.GetLastWriteTimeUtc(path);var wal=path+"-wal";return File.Exists(wal)&&File.GetLastWriteTimeUtc(wal)>latest?File.GetLastWriteTimeUtc(wal):latest;
+        }
+        if(File.Exists(database)&&LastDatabaseWrite(database)>=LastDatabaseWrite(legacy))return;
+        if(File.Exists(database))
+        {
+            var backupPath=database+".pre-msix-migration.bak";if(File.Exists(backupPath))File.Delete(backupPath);
+            using var current=new SqliteConnection(new SqliteConnectionStringBuilder{DataSource=database,Mode=SqliteOpenMode.ReadOnly}.ToString());
+            using var backup=new SqliteConnection(new SqliteConnectionStringBuilder{DataSource=backupPath,Mode=SqliteOpenMode.ReadWriteCreate}.ToString());
+            current.Open();backup.Open();current.BackupDatabase(backup);
+        }
+        var sourceString=new SqliteConnectionStringBuilder{DataSource=legacy,Mode=SqliteOpenMode.ReadOnly}.ToString();
+        var targetString=new SqliteConnectionStringBuilder{DataSource=database,Mode=SqliteOpenMode.ReadWriteCreate}.ToString();
+        using var source=new SqliteConnection(sourceString);using var target=new SqliteConnection(targetString);source.Open();target.Open();source.BackupDatabase(target);
+    }    SqliteConnection Open()
     {
         var c=new SqliteConnection(_connection);c.Open();
         using var setup=c.CreateCommand();setup.CommandText="PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;";setup.ExecuteNonQuery();
@@ -173,6 +190,21 @@ public sealed class TimeRepository
     {
         using var c=Open();using var tx=c.BeginTransaction();using(var setting=c.CreateCommand()){setting.Transaction=tx;setting.CommandText="INSERT INTO app_settings(key,value) VALUES('week_start_day',$value) ON CONFLICT(key) DO UPDATE SET value=$value";setting.Parameters.AddWithValue("$value",Math.Clamp(weekStartDay,1,7).ToString());setting.ExecuteNonQuery();}
         var order=0;foreach(var field in fields){using var q=c.CreateCommand();q.Transaction=tx;q.CommandText="INSERT INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES($key,$order,$visible,$bold) ON CONFLICT(field_key) DO UPDATE SET display_order=$order,is_visible=$visible,is_bold=$bold";q.Parameters.AddWithValue("$key",field.FieldKey);q.Parameters.AddWithValue("$order",order++);q.Parameters.AddWithValue("$visible",field.IsVisible?1:0);q.Parameters.AddWithValue("$bold",field.IsBold?1:0);q.ExecuteNonQuery();}tx.Commit();
+    }
+    public void BackupTo(string destination)
+    {
+        using var source=Open();using var target=new SqliteConnection(new SqliteConnectionStringBuilder{DataSource=destination,Mode=SqliteOpenMode.ReadWriteCreate}.ToString());target.Open();source.BackupDatabase(target);
+    }
+    public void ExportSessionsCsv(string destination)
+    {
+        static string Csv(string value)=>(char)34+value.Replace(((char)34).ToString(),new string((char)34,2))+(char)34;
+        using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT project,epic,activity,comment,start,end FROM sessions ORDER BY start";using var r=q.ExecuteReader();
+        using var writer=new StreamWriter(destination,false,new System.Text.UTF8Encoding(true));writer.WriteLine("Proyecto;Épica;Actividad;Comentario;Inicio;Fin;Duración");
+        while(r.Read())
+        {
+            var start=DateTime.Parse(r.GetString(4));var end=r.IsDBNull(5)?(DateTime?)null:DateTime.Parse(r.GetString(5));var duration=SessionRow.Format((end??DateTime.Now)-start);
+            writer.WriteLine(string.Join(';',Csv(r.GetString(0)),Csv(r.GetString(1)),Csv(r.GetString(2)),Csv(r.GetString(3)),Csv(start.ToString("yyyy-MM-dd HH:mm:ss")),Csv(end?.ToString("yyyy-MM-dd HH:mm:ss")??""),Csv(duration)));
+        }
     }
     public List<ScheduleTemplate> Templates(){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT id,name FROM schedule_templates ORDER BY name";using var r=q.ExecuteReader();var x=new List<ScheduleTemplate>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Name=r.GetString(1)});return x;}
     public List<ScheduleDay> TemplateDays(long id)

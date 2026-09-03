@@ -28,7 +28,7 @@ dotnet publish -c Release -r win-x64 --self-contained true `
   -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-La base de datos se crea en `data/timetracker.db`, junto al ejecutable. La carpeta `data` contiene información personal y está excluida del repositorio. Para trasladar el histórico a otro equipo, copia por separado el ejecutable y esa carpeta.
+La base de datos se guarda por usuario en %LocalAppData%\TimeTracker\timetracker.db. Al iniciar por primera vez, la aplicación migra automáticamente una base portable anterior ubicada junto al ejecutable. Desde Configuración se puede exportar el historial, crear una copia de seguridad y abrir la carpeta de datos.
 
 ### Publicar desde Visual Studio
 
@@ -41,3 +41,11 @@ El perfil genera `TimeTracker.exe` como un ejecutable único y autocontenido en 
 
 dotnet restore .\TimeTracker.csproj -r win-x64
 dotnet publish .\TimeTracker.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\main
+
+## Validación
+
+La solución incluye una suite de regresión autocontenida. Se ejecuta con dotnet run sobre el proyecto TimeTracker.Tests en configuración Release.
+
+## Microsoft Store
+
+La carpeta Packaging contiene el manifiesto, recursos y script de creación del MSIX. Consulta Packaging/README.md. Los textos iniciales de privacidad, avisos y ficha comercial están en docs y store.

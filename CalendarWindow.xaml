@@ -105,6 +105,12 @@
                                     <CheckBox x:Name="StartInWidgetBox" Content="Arrancar en modo widget" Margin="5,10,5,3"/>
                                     <CheckBox x:Name="AlwaysOnTopBox" Content="Mantener siempre visible" Margin="5,3"/>
                                     <TextBlock Text="El widget recuerda su posición. Escape vuelve a la aplicación completa." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="5,9,5,0"/>
+                                    <Separator Margin="0,12,0,8"/>
+                                    <TextBlock Text="Datos y soporte" FontWeight="SemiBold"/>
+                                    <Button Content="Exportar historial CSV" Click="ExportDataClick" Margin="0,7,0,2" AutomationProperties.Name="Exportar historial a CSV"/>
+                                    <Button Content="Crear copia de seguridad" Click="BackupDataClick" Margin="0,2" AutomationProperties.Name="Crear copia de seguridad"/>
+                                    <Button Content="Abrir carpeta de datos" Click="OpenDataFolderClick" Margin="0,2" AutomationProperties.Name="Abrir carpeta de datos y diagnóstico"/>
+                                    <Button Content="Acerca de TimeTracker" Click="AboutClick" Margin="0,2" AutomationProperties.Name="Información y privacidad"/>
                                 </StackPanel>
                             </Border>
                         </Grid>

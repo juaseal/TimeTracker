@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Diagnostics;
+using System.Reflection;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 namespace TimeTracker;
@@ -29,6 +32,22 @@ public partial class CalendarWindow : Window
     void MoveRecentField(int offset){if(RecentFieldsGrid.SelectedItem is not RecentFieldSetting item)return;var index=_recentFields.IndexOf(item);var target=index+offset;if(target<0||target>=_recentFields.Count)return;_recentFields.Move(index,target);RecentFieldsGrid.SelectedItem=item;RecentFieldsGrid.ScrollIntoView(item);}
     void MoveFieldUpClick(object s,RoutedEventArgs e)=>MoveRecentField(-1);
     void MoveFieldDownClick(object s,RoutedEventArgs e)=>MoveRecentField(1);
+    void ExportDataClick(object s,RoutedEventArgs e)
+    {
+        var dialog=new SaveFileDialog{Title="Exportar historial",Filter="Archivo CSV (*.csv)|*.csv",FileName=$"timetracker-{DateTime.Today:yyyyMMdd}.csv",DefaultExt=".csv",AddExtension=true};
+        if(dialog.ShowDialog(this)!=true)return;try{_repo.ExportSessionsCsv(dialog.FileName);PreferencesStatusText.Text="Historial exportado";}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo exportar");}
+    }
+    void BackupDataClick(object s,RoutedEventArgs e)
+    {
+        var dialog=new SaveFileDialog{Title="Crear copia de seguridad",Filter="Base de datos SQLite (*.db)|*.db",FileName=$"timetracker-backup-{DateTime.Today:yyyyMMdd}.db",DefaultExt=".db",AddExtension=true};
+        if(dialog.ShowDialog(this)!=true)return;try{_repo.BackupTo(dialog.FileName);PreferencesStatusText.Text="Copia de seguridad creada";}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo crear la copia");}
+    }
+    void OpenDataFolderClick(object s,RoutedEventArgs e){AppPaths.EnsureDataDirectory();Process.Start(new ProcessStartInfo(AppPaths.DataDirectory){UseShellExecute=true});}
+    void AboutClick(object s,RoutedEventArgs e)
+    {
+        var version=Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)??"1.0.0";
+        MessageBox.Show($"TimeTracker {version}\n\nTus registros se guardan localmente en este equipo. La aplicación no transmite datos ni utiliza telemetría.\n\nDatos y diagnóstico:\n{AppPaths.DataDirectory}","Acerca de TimeTracker",MessageBoxButton.OK,MessageBoxImage.Information);
+    }
     void SavePreferencesClick(object s,RoutedEventArgs e)
     {
         RecentFieldsGrid.CommitEdit(DataGridEditingUnit.Cell,true);RecentFieldsGrid.CommitEdit(DataGridEditingUnit.Row,true);

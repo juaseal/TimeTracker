@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
+  <Identity Name="__PACKAGE_IDENTITY_NAME__" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="__ARCHITECTURE__"/>
+  <Properties>
+    <DisplayName>TimeTracker</DisplayName>
+    <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
+    <Description>Registro personal de tiempo con resúmenes preparados para SAP.</Description>
+    <Logo>AssetsStoreLogo.png</Logo>
+  </Properties>
+  <Resources><Resource Language="es-es"/></Resources>
+  <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0"/></Dependencies>
+  <Applications>
+    <Application Id="App" Executable="TimeTracker.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="TimeTracker" Description="Registro personal de tiempo con resúmenes preparados para SAP." BackgroundColor="transparent" Square44x44Logo="AssetsSquare44x44Logo.png" Square150x150Logo="AssetsSquare150x150Logo.png">
+        <uap:DefaultTile Wide310x150Logo="AssetsWide310x150Logo.png"/>
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+  <Capabilities><rescap:Capability Name="runFullTrust"/></Capabilities>
+</Package>

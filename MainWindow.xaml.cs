@@ -97,7 +97,7 @@ public partial class MainWindow : Window
     }
     static string FormatHours(double hours)=>SessionRow.Format(TimeSpan.FromHours(hours));
     void LoadRoundingPolicy(){_sapRoundingEnabled=_repo.BoolSetting("sap_rounding_enabled");_sapRoundingMinutes=int.TryParse(_repo.Setting("sap_rounding_minutes","30"),out var minutes)&&minutes is >=5 and <=30&&minutes%5==0?minutes:30;}
-    double RoundForSap(double hours){if(!_sapRoundingEnabled)return hours;var units=hours*60/_sapRoundingMinutes;return Math.Round(units,MidpointRounding.AwayFromZero)*_sapRoundingMinutes/60d;}
+    double RoundForSap(double hours)=>SapRounding.Apply(hours,_sapRoundingEnabled,_sapRoundingMinutes);
     string SapPolicyText()=>_sapRoundingEnabled?$"SAP · redondeo a {_sapRoundingMinutes} min":"SAP · sin redondeo";
     DateTime StartOfWeek(DateTime date){var day=date.DayOfWeek==DayOfWeek.Sunday?7:(int)date.DayOfWeek;return date.Date.AddDays(-((7+day-_weekStartDay)%7));}
     void PreviousDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(-1);

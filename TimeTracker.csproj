@@ -1,16 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>TimeTracker</AssemblyName>
     <RootNamespace>TimeTracker</RootNamespace>
     <ApplicationIcon>Assets\TimeTracker.ico</ApplicationIcon>
-    <TargetPlatformMoniker>Windows,Version=7.0</TargetPlatformMoniker>
-    <TargetPlatformDisplayName>Windows</TargetPlatformDisplayName>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>TimeTracker</Authors>
+    <Company>TimeTracker</Company>
+    <Product>TimeTracker</Product>
+    <Description>Registro personal de tiempo para Windows con resúmenes preparados para SAP.</Description>
+    <Copyright>Copyright © 2026 TimeTracker</Copyright>
+    <NeutralLanguage>es-ES</NeutralLanguage>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="TimeTracker.Tests/**/*.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
   </ItemGroup>
