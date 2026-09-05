@@ -14,43 +14,47 @@ public partial class MainWindow : Window
     readonly TimeRepository _repo; readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; bool _sapRoundingEnabled; int _sapRoundingMinutes=30; List<RecentFieldSetting> _recentFieldSettings=new(); WidgetWindow? _widget;
     static readonly Brush[] ReportColors={new SolidColorBrush(Color.FromRgb(109,93,251)),new SolidColorBrush(Color.FromRgb(39,131,106)),new SolidColorBrush(Color.FromRgb(235,150,48)),new SolidColorBrush(Color.FromRgb(211,78,94)),new SolidColorBrush(Color.FromRgb(55,136,216)),new SolidColorBrush(Color.FromRgb(151,91,178)),new SolidColorBrush(Color.FromRgb(76,164,84)),new SolidColorBrush(Color.FromRgb(210,112,45))};
     public MainWindow():this(new TimeRepository()){}
-    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
-    void ApplyRecentFields(IEnumerable<ActivitySuggestion> recent)
-    {
-        foreach(var item in recent)item.DisplayFields=_recentFieldSettings.Where(x=>x.IsVisible).OrderBy(x=>x.Order).Select(x=>new RecentDisplayField{Text=x.FieldKey switch{"project"=>item.Project,"epic"=>item.Epic,"activity"=>item.Activity,"comment"=>item.CommentText,"time"=>item.TimeText,_=>""},FontWeight=x.IsBold?FontWeights.Bold:FontWeights.Normal}).ToList();
-    }
-    List<ActivitySuggestion> CombinedRecent(string? project=null)
-    {
-        var favorites=_repo.Favorites(project);var recent=_repo.Recent(project);ApplyRecentFields(favorites);ApplyRecentFields(recent);
-        var result=favorites.Concat(recent.Where(x=>!x.IsFavorite)).ToList();if(favorites.Count>0&&result.Count>favorites.Count)result[favorites.Count].SeparatorThickness=new Thickness(0,1,0,0);return result;
-    }
-    void RefreshRecent(){var recent=CombinedRecent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
+    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();ProjectBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));EpicBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));ActivityBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
+    List<ActivitySuggestion> CombinedRecent(string? project=null)=>_repo.RecentFeed(project);
+    void RefreshRecent(){_recentFieldSettings=_repo.RecentFieldSettings();var recent=CombinedRecent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
     void RefreshClock()
     {
         _active=_repo.Active();
         if(_active is null)
         {
-            ActiveTitle.Text="Sin tarea activa";ActiveDetail.Text="Elige proyecto, épica y actividad";Clock.Text="00:00:00";
-            ActiveStateBadge.Visibility=Visibility.Collapsed;HeaderStatusText.Text="Sin tarea activa";HeaderStatusDot.Fill=Brushes.Gray;return;
+            ActiveTitle.Text="No active task";ActiveDetail.Text="Choose a project, epic, and activity";Clock.Text="00:00:00";
+            ActiveStateBadge.Visibility=Visibility.Collapsed;HeaderStatusText.Text="No active task";HeaderStatusDot.Fill=Brushes.Gray;return;
         }
         ActiveTitle.Text=$"{_active.Project} · {_active.Epic}";ActiveDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$"  —  {_active.Comment}");
         Clock.Text=((DateTime.Now-_active.Start) is var d)?$"{(int)d.TotalHours:00}:{d.Minutes:00}:{d.Seconds:00}":"";
-        ActiveStateBadge.Visibility=Visibility.Visible;HeaderStatusText.Text="Registrando";HeaderStatusDot.Fill=(Brush)FindResource("Success");
+        ActiveStateBadge.Visibility=Visibility.Visible;HeaderStatusText.Text="Tracking";HeaderStatusDot.Fill=(Brush)FindResource("Success");
     }
     void OpenWidgetClick(object s,RoutedEventArgs e)=>OpenWidget();
     void OpenWidget(){if(_widget?.IsVisible==true){_widget.Activate();return;}_widget=new WidgetWindow(_repo,this);_widget.Closed+=(_,_)=>_widget=null;_widget.Show();Hide();}
     internal void ShowWidgetAtStartup()=>OpenWidget();
     public void RefreshFromWidget(){RefreshAll();RefreshReport();}
-    void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Indica proyecto, épica y actividad.","TimeTracker");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
+    void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Enter a project, epic, and activity.","TaskUp");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
     {
         var p=ProjectBox.SelectedItem?.ToString()??ProjectBox.Text;var recent=CombinedRecent(p);
         RecentList.ItemsSource=recent;ActivityBox.ItemsSource=recent;EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
         if(recent.FirstOrDefault() is { } last){EpicBox.Text=last.Epic;ActivityBox.SelectedItem=last;ActivityBox.Text=last.Activity;}
-    }    void RecentSelected(object s,SelectionChangedEventArgs e)
+    }
+    void NowFieldTextChanged(object s,TextChangedEventArgs e)
     {
-        if(s is not ListBox list||list.SelectedItem is not ActivitySuggestion x)return;
+        CommentBox.Clear();
+        Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,new Action(()=>
+        {
+            var project=ProjectBox.Text.Trim();var epic=EpicBox.Text.Trim();var activity=ActivityBox.Text.Trim();
+            if(ActivityBox.SelectedItem is ActivitySuggestion selected&&string.Equals(ActivityBox.Text,selected.Display,StringComparison.OrdinalIgnoreCase))activity=selected.Activity;
+            if(string.IsNullOrWhiteSpace(project)||string.IsNullOrWhiteSpace(epic)||string.IsNullOrWhiteSpace(activity))return;
+            CommentBox.Text=_repo.LastComment(project,epic,activity)??"";
+        }));
+    }
+    void RecentSelected(object s,SelectionChangedEventArgs e)
+    {
+        if(s is not ListBox list||!list.IsKeyboardFocusWithin||list.SelectedItem is not ActivitySuggestion x)return;
         ProjectBox.Text=x.Project;EpicBox.Text=x.Epic;ActivityBox.SelectedItem=x;ActivityBox.Text=x.Activity;CommentBox.Text=x.Comment;
         _active=_repo.Active();if(_active is not null&&string.Equals(_active.Project,x.Project,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Epic,x.Epic,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Activity,x.Activity,StringComparison.OrdinalIgnoreCase))return;
         StartClick(s,new RoutedEventArgs());
@@ -67,12 +71,12 @@ public partial class MainWindow : Window
         if(expected>0&&difference>1d/3600)
         {
             var start=rows.Count==0?day.AddHours(9):(rows.Max(x=>x.End??DateTime.Now));
-            rows.Add(new SessionRow{Id=-1,Start=start,End=start.AddHours(difference),Activity="Sin especificar",Comment="Tiempo pendiente de asignar"});
-            DayStatusText.Text=$"Jornada {FormatHours(expected)} · Faltan {FormatHours(difference)}";DayStatusText.Foreground=System.Windows.Media.Brushes.DarkOrange;
+            rows.Add(new SessionRow{Id=-1,Start=start,End=start.AddHours(difference),Activity="Unspecified",Comment="Unallocated time"});
+            DayStatusText.Text=$"Workday {FormatHours(expected)} · Remaining {FormatHours(difference)}";DayStatusText.Foreground=System.Windows.Media.Brushes.DarkOrange;
         }
-        else if(expected>0&&difference< -1d/3600){DayStatusText.Text=$"Jornada {FormatHours(expected)} · Exceso {FormatHours(-difference)}";DayStatusText.Foreground=System.Windows.Media.Brushes.Red;}
-        else if(expected>0){DayStatusText.Text=$"Jornada completa · {FormatHours(expected)}";DayStatusText.Foreground=System.Windows.Media.Brushes.ForestGreen;}
-        else{DayStatusText.Text="Día sin jornada configurada";DayStatusText.Foreground=System.Windows.Media.Brushes.Gray;}
+        else if(expected>0&&difference< -1d/3600){DayStatusText.Text=$"Workday {FormatHours(expected)} · Overtime {FormatHours(-difference)}";DayStatusText.Foreground=System.Windows.Media.Brushes.Red;}
+        else if(expected>0){DayStatusText.Text=$"Workday complete · {FormatHours(expected)}";DayStatusText.Foreground=System.Windows.Media.Brushes.ForestGreen;}
+        else{DayStatusText.Text="No work schedule configured for this day";DayStatusText.Foreground=System.Windows.Media.Brushes.Gray;}
         DayGrid.ItemsSource=new ObservableCollection<SessionRow>(rows);
     }
     void RefreshDayStatus(SessionRow? editedRow=null,DateTime? editedStart=null,DateTime? editedEnd=null)
@@ -90,9 +94,9 @@ public partial class MainWindow : Window
     void SetDayStatus(double expected,double difference)
     {
         var separator=$" {(char)0x00B7} ";
-        if(expected>0&&difference>1d/3600){DayStatusText.Text=$"Jornada {FormatHours(expected)}{separator}Faltan {FormatHours(difference)}";DayStatusText.Foreground=Brushes.DarkOrange;}
-        else if(expected>0&&difference< -1d/3600){DayStatusText.Text=$"Jornada {FormatHours(expected)}{separator}Exceso {FormatHours(-difference)}";DayStatusText.Foreground=Brushes.Red;}
-        else if(expected>0){DayStatusText.Text=$"Jornada completa{separator}{FormatHours(expected)}";DayStatusText.Foreground=Brushes.ForestGreen;}
+        if(expected>0&&difference>1d/3600){DayStatusText.Text=$"Workday {FormatHours(expected)}{separator}Remaining {FormatHours(difference)}";DayStatusText.Foreground=Brushes.DarkOrange;}
+        else if(expected>0&&difference< -1d/3600){DayStatusText.Text=$"Workday {FormatHours(expected)}{separator}Overtime {FormatHours(-difference)}";DayStatusText.Foreground=Brushes.Red;}
+        else if(expected>0){DayStatusText.Text=$"Workday complete{separator}{FormatHours(expected)}";DayStatusText.Foreground=Brushes.ForestGreen;}
         else{DayStatusText.Text=$"D{(char)0x00ED}a sin jornada configurada";DayStatusText.Foreground=Brushes.Gray;}
     }
     static string FormatHours(double hours)=>SessionRow.Format(TimeSpan.FromHours(hours));
@@ -105,12 +109,12 @@ public partial class MainWindow : Window
     void NextDayClick(object s,RoutedEventArgs e)=>DayPicker.SelectedDate=(DayPicker.SelectedDate??DateTime.Today).Date.AddDays(1);
     void LoadWeek()
     {
-        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);WeekNumberText.Text=$"Periodo · {start:dd/MM}–{start.AddDays(6):dd/MM}";SapPolicyTextBlock.Text=SapPolicyText();var rows=_repo.Week(start);ApplyDailySummaries(rows);var view=CollectionViewSource.GetDefaultView(rows);view.GroupDescriptions.Clear();view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SummaryRow.DayText)));WeekGrid.ItemsSource=view;LoadWeekSummary(rows,start);
+        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);WeekNumberText.Text=$"Period · {start:dd/MM}–{start.AddDays(6):dd/MM}";SapPolicyTextBlock.Text=SapPolicyText();var rows=_repo.Week(start);ApplyDailySummaries(rows);var view=CollectionViewSource.GetDefaultView(rows);view.GroupDescriptions.Clear();view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SummaryRow.DayText)));WeekGrid.ItemsSource=view;LoadWeekSummary(rows,start);
     }
     void LoadWeekSummary(IReadOnlyList<SummaryRow> source,DateTime start)
     {
         while(WeekSummaryGrid.Columns.Count>2)WeekSummaryGrid.Columns.RemoveAt(1);
-        for(var i=0;i<7;i++){var day=start.AddDays(i);var name=CultureInfo.GetCultureInfo("es-ES").TextInfo.ToTitleCase(day.ToString("dddd",CultureInfo.GetCultureInfo("es-ES")));WeekSummaryGrid.Columns.Insert(1+i,new DataGridTextColumn{Header=$"{name}\n{day:dd/MM}",Binding=new Binding($"DayHours[{i}]"){Mode=BindingMode.OneWay},Width=new DataGridLength(88),IsReadOnly=true});}
+        for(var i=0;i<7;i++){var day=start.AddDays(i);var name=CultureInfo.GetCultureInfo("en-US").TextInfo.ToTitleCase(day.ToString("dddd",CultureInfo.GetCultureInfo("en-US")));WeekSummaryGrid.Columns.Insert(1+i,new DataGridTextColumn{Header=$"{name}\n{day:dd/MM}",Binding=new Binding($"DayHours[{i}]"){Mode=BindingMode.OneWay},Width=new DataGridLength(88),IsReadOnly=true});}
         WeekSummaryGrid.ItemsSource=source.GroupBy(x=>new{x.Project,x.Epic}).OrderBy(x=>x.Key.Project).ThenBy(x=>x.Key.Epic).Select(group=>new WeekSummaryRow{Project=group.Key.Project,Epic=group.Key.Epic,DayHours=Enumerable.Range(0,7).Select(offset=>{var hours=RoundForSap(group.Where(x=>x.Day==start.AddDays(offset)).Sum(x=>x.Registered.TotalHours+x.Added));return Math.Abs(hours)<0.0000001?"":hours.ToString("0.##",CultureInfo.CurrentCulture);}).ToArray()}).ToList();
     }
     void ApplyDailySummaries(IEnumerable<SummaryRow> source)
@@ -136,14 +140,14 @@ public partial class MainWindow : Window
         var summary=new SummaryRow{Day=day,Project=project,Epic=epic};var text=string.Join(Environment.NewLine,_repo.TasksForSummary(summary));
         var editor=new TextBox{Text=text,IsReadOnly=true,AcceptsReturn=true,TextWrapping=TextWrapping.Wrap,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,Margin=new Thickness(12),FontSize=14};
         var window=new Window{Title=$"{day:dd/MM/yyyy} · {project} · {epic}",Owner=this,Width=620,Height=420,WindowStartupLocation=WindowStartupLocation.CenterOwner};
-        var copy=new Button{Content="Copiar",HorizontalAlignment=HorizontalAlignment.Right,Margin=new Thickness(8),MinWidth=100};copy.Click+=(_,_)=>{try{Clipboard.SetText(editor.Text);window.Close();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo copiar");}};
+        var copy=new Button{Content="Copy",HorizontalAlignment=HorizontalAlignment.Right,Margin=new Thickness(8),MinWidth=100};copy.Click+=(_,_)=>{try{Clipboard.SetText(editor.Text);window.Close();}catch(Exception ex){MessageBox.Show(ex.Message,"Could not copy");}};
         var panel=new DockPanel();DockPanel.SetDock(copy,Dock.Bottom);panel.Children.Add(copy);panel.Children.Add(editor);window.Content=panel;
         window.ContentRendered+=(_,_)=>{editor.Focus();editor.SelectAll();};
         window.PreviewKeyDown+=(_,key)=>
         {
             if(key.Key==Key.C&&(Keyboard.Modifiers&ModifierKeys.Control)!=0)
             {
-                key.Handled=true;try{Clipboard.SetText(editor.Text);window.Close();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo copiar");}return;
+                key.Handled=true;try{Clipboard.SetText(editor.Text);window.Close();}catch(Exception ex){MessageBox.Show(ex.Message,"Could not copy");}return;
             }
             if(key.Key==Key.Escape){key.Handled=true;window.Close();}
         };
@@ -191,6 +195,10 @@ public partial class MainWindow : Window
     }
     void DayGridKeyDown(object s,KeyEventArgs e)
     {
+        if(e.Key==Key.Delete&&Keyboard.Modifiers==ModifierKeys.None)
+        {
+            ClearCurrentDayCell();e.Handled=true;return;
+        }
         if(e.Key==Key.Enter&&e.OriginalSource is not TextBox)
         {
             if(DayGrid.CurrentCell.Column is not null&&!DayGrid.CurrentCell.Column.IsReadOnly)DayGrid.BeginEdit();
@@ -199,12 +207,21 @@ public partial class MainWindow : Window
         if((Keyboard.Modifiers&ModifierKeys.Control)==0)return;
         if(e.Key==Key.C){CopyCell();e.Handled=true;}else if(e.Key==Key.V){PasteCell();e.Handled=true;}
     }
+    void ClearCurrentDayCell()
+    {
+        DayGrid.CommitEdit(DataGridEditingUnit.Cell,true);DayGrid.CommitEdit(DataGridEditingUnit.Row,true);
+        if(DayGrid.CurrentCell.Item is not SessionRow row||DayGrid.CurrentCell.Column is null||DayGrid.CurrentCell.Column.IsReadOnly)return;
+        var columnIndex=DayGrid.CurrentCell.Column.DisplayIndex;if(columnIndex==0)return;
+        var before=Clone(row);SetCellValue(row,columnIndex,"");
+        if(Same(before,row))return;
+        PushRestore(row,before);_repo.Save(row);DayGrid.Items.Refresh();RefreshDayStatus();LoadWeek();RefreshRecent();RestoreCellFocus(row,columnIndex);
+    }
     void WindowKeyDown(object s,KeyEventArgs e){if((Keyboard.Modifiers&ModifierKeys.Control)!=0&&e.Key==Key.Z){UndoLast();e.Handled=true;}}
     void CopyCell()
     {
         if(DayGrid.CurrentCell.Item is not SessionRow row||DayGrid.CurrentCell.Column is null)return;
         var columnIndex=DayGrid.CurrentCell.Column.DisplayIndex;var value=CellValue(row,columnIndex);
-        try{Clipboard.SetText(value??"");}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}
+        try{Clipboard.SetText(value??"");}catch(Exception ex){MessageBox.Show($"Could not copy: {ex.Message}","TaskUp");}
         finally{RestoreCellFocus(row,columnIndex);}
     }
     void PasteCell()
@@ -218,15 +235,15 @@ public partial class MainWindow : Window
             if(!ValidInterval(row)){CopyValues(before,row);DayGrid.Items.Refresh();RefreshDayStatus();ShowTimeError();return;}
             if(!Same(before,row))PushRestore(row,before);_repo.Save(row);DayGrid.Items.Refresh();RefreshDayStatus();LoadWeek();RefreshRecent();
         }
-        catch(Exception ex){MessageBox.Show($"No se pudo pegar: {ex.Message}","TimeTracker");}
+        catch(Exception ex){MessageBox.Show($"Could not paste: {ex.Message}","TaskUp");}
         finally{RestoreCellFocus(row,columnIndex);}
     }
     static string CellValue(SessionRow row,int column)=>column switch{0=>row.StartText,1=>row.EndText,2=>row.Project,3=>row.Epic,4=>row.Activity,5=>row.Comment,_=>row.Duration};
     static void SetCellValue(SessionRow row,int column,string value){switch(column){case 0:row.StartText=value;break;case 1:row.EndText=value;break;case 2:row.Project=value;break;case 3:row.Epic=value;break;case 4:row.Activity=value;break;case 5:row.Comment=value;break;}}
     static bool TryReadTime(string value,out TimeSpan time){var text=value.Trim().Replace('.',':');if(text.Length is 3 or 4&&text.All(char.IsDigit))text=text.Insert(text.Length-2,":");return TimeSpan.TryParse(text,out time);}
     static bool ValidInterval(SessionRow row)=>row.End is null||row.End>row.Start;
-    static void ShowTimeError()=>MessageBox.Show("La hora de inicio debe ser anterior a la hora de fin. Se ha recuperado el valor anterior.","Hora no válida",MessageBoxButton.OK,MessageBoxImage.Warning);
-    static void ShowTimeFormatError()=>MessageBox.Show("Escribe una hora como 1020, 10:20 o 10.20. Se ha recuperado el valor anterior.","Formato de hora no válido",MessageBoxButton.OK,MessageBoxImage.Warning);
+    static void ShowTimeError()=>MessageBox.Show("The start time must be earlier than the end time. The previous value has been restored.","Invalid time",MessageBoxButton.OK,MessageBoxImage.Warning);
+    static void ShowTimeFormatError()=>MessageBox.Show("Enter a time such as 1020, 10:20, or 10.20. The previous value has been restored.","Invalid time format",MessageBoxButton.OK,MessageBoxImage.Warning);
     void PushRestore(SessionRow target,SessionRow before)
     {
         _undo.Push(()=>{CopyValues(before,target);_repo.Save(target);DayGrid.Items.Refresh();RefreshDayStatus();LoadWeek();RefreshRecent();SelectCell(target,Math.Max(0,DayGrid.CurrentCell.Column?.DisplayIndex??0));});
@@ -271,14 +288,14 @@ public partial class MainWindow : Window
     {
         DayGrid.CommitEdit(DataGridEditingUnit.Cell,true);DayGrid.CommitEdit(DataGridEditingUnit.Row,true);
         var row=DayGrid.CurrentCell.Item as SessionRow??DayGrid.SelectedItem as SessionRow??DayGrid.SelectedCells.Select(x=>x.Item).OfType<SessionRow>().FirstOrDefault();
-        if(row is null){MessageBox.Show("Selecciona una celda de la fila que quieres eliminar.","TimeTracker");return;}
+        if(row is null){MessageBox.Show("Select a cell in the row you want to delete.","TaskUp");return;}
         var copy=Clone(row);_repo.Delete(row.Id);_undo.Push(()=>{copy.Id=0;_repo.Save(copy);LoadDay();LoadWeek();RefreshRecent();});LoadDay();LoadWeek();RefreshRecent();
     }
     void CopyWeekClick(object s,RoutedEventArgs e)
     {
-        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);var rows=_repo.Week(start);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM",CultureInfo.GetCultureInfo("es-ES")));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{SessionRow.Format(TimeSpan.FromHours(RoundForSap(x.Registered.TotalHours+x.Added)))}");b.AppendLine();}CopyToClipboard(b.ToString());
+        var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);var rows=_repo.Week(start);var b=new StringBuilder();foreach(var g in rows.GroupBy(x=>x.Day)){b.AppendLine(g.Key.ToString("dddd dd/MM",CultureInfo.GetCultureInfo("en-US")));foreach(var x in g)b.AppendLine($"{x.Project} - {x.Epic}\t{SessionRow.Format(TimeSpan.FromHours(RoundForSap(x.Registered.TotalHours+x.Added)))}");b.AppendLine();}CopyToClipboard(b.ToString());
     }
-    string WeekSummaryHeader(DateTime start)=>"Proyecto - Épica\t"+string.Join('\t',Enumerable.Range(0,7).Select(i=>start.AddDays(i).ToString("dddd dd/MM",CultureInfo.GetCultureInfo("es-ES"))));
+    string WeekSummaryHeader(DateTime start)=>"Project - Epic\t"+string.Join('\t',Enumerable.Range(0,7).Select(i=>start.AddDays(i).ToString("dddd dd/MM",CultureInfo.GetCultureInfo("en-US"))));
     static string WeekSummaryLine(WeekSummaryRow row)=>CleanClipboardText(row.ProjectEpic)+"\t"+string.Join('\t',row.DayHours);
     static string CleanClipboardText(string value)=>value.Replace('\t',' ').Replace('\r',' ').Replace('\n',' ');
     void CopyWeekSummaryRowClick(object s,RoutedEventArgs e){if(s is Button{DataContext:WeekSummaryRow row})CopyToClipboard(string.Join('\t',row.DayHours));}
@@ -286,7 +303,7 @@ public partial class MainWindow : Window
     {
         var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);var rows=(WeekSummaryGrid.ItemsSource as IEnumerable<WeekSummaryRow>)?.ToList()??new();var builder=new StringBuilder(WeekSummaryHeader(start));foreach(var row in rows)builder.AppendLine().Append(WeekSummaryLine(row));CopyToClipboard(builder.ToString());
     }
-    static void CopyToClipboard(string text){try{Clipboard.SetText(text);}catch(Exception ex){MessageBox.Show($"No se pudo copiar: {ex.Message}","TimeTracker");}}
+    static void CopyToClipboard(string text){try{Clipboard.SetText(text);}catch(Exception ex){MessageBox.Show($"Could not copy: {ex.Message}","TaskUp");}}
     void ShowSettings()
     {
         new CalendarWindow(_repo){Owner=this}.ShowDialog();AppearanceManager.Apply(AppearanceManager.Load(_repo));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();RefreshRecent();LoadDay();var start=StartOfWeek(WeekPicker.SelectedDate??DateTime.Today);if(WeekPicker.SelectedDate?.Date!=start)WeekPicker.SelectedDate=start;else LoadWeek();RefreshReport();
@@ -302,11 +319,11 @@ public partial class MainWindow : Window
     {
         if(ReportFromPicker.SelectedDate is not DateTime from||ReportToPicker.SelectedDate is not DateTime to)return;if(from>to){(from,to)=(to,from);ReportFromPicker.SelectedDate=from;ReportToPicker.SelectedDate=to;}
         var data=_repo.Report(from,to,_reportProject,_reportEpic,_reportActivity);ReportGrid.ItemsSource=data;DrawPie(data);ReportBackButton.Visibility=_reportProject is null?Visibility.Collapsed:Visibility.Visible;
-        ReportLevelText.Text=_reportProject is null?"Tiempo por proyecto":_reportEpic is null?$"{_reportProject} · por épica":_reportActivity is null?$"{_reportProject} / {_reportEpic} · por tarea":$"{_reportProject} / {_reportEpic} / {_reportActivity} · por comentario";
+        ReportLevelText.Text=_reportProject is null?"Time by project":_reportEpic is null?$"{_reportProject} · by epic":_reportActivity is null?$"{_reportProject} / {_reportEpic} · by task":$"{_reportProject} / {_reportEpic} / {_reportActivity} · by comment";
     }
     void DrawPie(IReadOnlyList<ReportSlice> data)
     {
-        ReportPie.Children.Clear();var total=data.Sum(x=>x.Hours);if(total<=0){ReportPie.Children.Add(new TextBlock{Text="No hay tiempo registrado en este periodo",Foreground=Brushes.Gray,FontSize=16});return;}
+        ReportPie.Children.Clear();var total=data.Sum(x=>x.Hours);if(total<=0){ReportPie.Children.Add(new TextBlock{Text="No time has been recorded in this period",Foreground=Brushes.Gray,FontSize=16});return;}
         const double cx=310,cy=215,r=150;double angle=-90;var labels=new List<(ReportSlice Slice,double Mid,bool Right,double Y,Point Edge,Brush Color)>();
         for(var i=0;i<data.Count;i++)
         {
@@ -331,6 +348,6 @@ public partial class MainWindow : Window
     void ReportBackClick(object s,RoutedEventArgs e){if(_reportActivity is not null)_reportActivity=null;else if(_reportEpic is not null)_reportEpic=null;else _reportProject=null;RefreshReport();}
     void CopyReportClick(object s,RoutedEventArgs e)
     {
-        var rows=(ReportGrid.ItemsSource as IEnumerable<ReportSlice>)?.ToList()??new();var builder=new StringBuilder("Concepto\tHoras\tPorcentaje");foreach(var row in rows)builder.AppendLine().Append(row.Label.Replace('\t',' ').Replace('\r',' ').Replace('\n',' ')).Append('\t').Append(row.Hours.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)).Append('\t').Append(row.Percentage.ToString("0.#",System.Globalization.CultureInfo.InvariantCulture)).Append('%');try{Clipboard.SetText(builder.ToString());}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo copiar");}
+        var rows=(ReportGrid.ItemsSource as IEnumerable<ReportSlice>)?.ToList()??new();var builder=new StringBuilder("Item\tHours\tPercentage");foreach(var row in rows)builder.AppendLine().Append(row.Label.Replace('\t',' ').Replace('\r',' ').Replace('\n',' ')).Append('\t').Append(row.Hours.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)).Append('\t').Append(row.Percentage.ToString("0.#",System.Globalization.CultureInfo.InvariantCulture)).Append('%');try{Clipboard.SetText(builder.ToString());}catch(Exception ex){MessageBox.Show(ex.Message,"Could not copy");}
     }
 }

@@ -25,7 +25,7 @@ public partial class App : Application
             File.AppendAllText(AppPaths.LogPath,$"{DateTime.Now:O}{Environment.NewLine}{detail}{Environment.NewLine}{new string('-',60)}{Environment.NewLine}");
         }        catch { }
         var now=DateTime.Now;var shouldShow=e.Exception.Message!=_lastError||(now-_lastErrorAt)>TimeSpan.FromSeconds(5);_lastError=e.Exception.Message;_lastErrorAt=now;
-        if(shouldShow)MessageBox.Show("Se produjo un error inesperado, pero la aplicación seguirá abierta. Puedes encontrar el diagnóstico en Configuración.","TimeTracker",MessageBoxButton.OK,MessageBoxImage.Error);
+        if(shouldShow)MessageBox.Show("An unexpected error occurred, but the application will remain open. You can find diagnostic information in Settings.","TaskUp",MessageBoxButton.OK,MessageBoxImage.Error);
         e.Handled=true;
     }
 }

@@ -12,12 +12,29 @@ Run("Cambiar el comentario crea una sesión",()=>{
     repo.Start("Proyecto","Épica","Actividad","Primero");repo.Start("Proyecto","Épica","Actividad","Segundo");
     Equal(2,repo.Day(DateTime.Today).Count);Equal("Segundo",repo.Active()!.Comment);
 });
-Run("Backup y CSV conservan el historial",()=>{
+Run("Recupera el último comentario de la combinación exacta",()=>{
+    using var fixture=new RepositoryFixture();var repo=fixture.Repository;
+    repo.Start("Proyecto","Epica","Actividad","Primero");repo.Stop();
+    repo.Start("Proyecto","Otra","Actividad","No corresponde");repo.Stop();
+    repo.Start("Proyecto","Epica","Actividad","Ultimo");repo.Stop();
+    Equal("Ultimo",repo.LastComment("Proyecto","Epica","Actividad"));
+    Equal<string?>(null,repo.LastComment("Proyecto","Epica","Nueva"));
+});
+Run("Recientes comparte límite, favoritos y formato configurado",()=>{
+    using var fixture=new RepositoryFixture();var repo=fixture.Repository;
+    for(var i=1;i<=5;i++){repo.Start("P"+i,"E"+i,"A"+i,"C"+i);repo.Stop();}
+    var oldest=repo.Recent().Single(x=>x.Project=="P1");repo.SetFavorite(oldest,true);
+    var fields=repo.RecentFieldSettings();foreach(var field in fields){field.IsVisible=field.FieldKey is "project" or "activity";field.IsBold=field.FieldKey=="project";}
+    var project=fields.Single(x=>x.FieldKey=="project");fields.Remove(project);fields.Insert(0,project);
+    repo.SavePreferences(1,3,fields);
+    var feed=repo.RecentFeed();
+    Equal(3,feed.Count);Equal("P1",feed[0].Project);True(feed[0].IsFavorite);Equal(2,feed[0].DisplayFields.Count);Equal("P1",feed[0].DisplayFields[0].Text);Equal(System.Windows.FontWeights.Bold,feed[0].DisplayFields[0].FontWeight);Equal("A1",feed[0].DisplayFields[1].Text);
+});Run("Backup y CSV conservan el historial",()=>{
     using var fixture=new RepositoryFixture();var repo=fixture.Repository;
     repo.Start("Proyecto","Épica","Actividad","Comentario");repo.Stop();
     var backup=Path.Combine(fixture.Directory,"backup.db");var csv=Path.Combine(fixture.Directory,"history.csv");
     repo.BackupTo(backup);repo.ExportSessionsCsv(csv);
-    True(File.Exists(backup));True(File.ReadAllText(csv).Contains("Proyecto;Épica;Actividad"));True(File.ReadAllText(csv).Contains("Comentario"));Equal(1,new TimeRepository(backup).Day(DateTime.Today).Count);
+    True(File.Exists(backup));True(File.ReadAllText(csv).Contains("Project;Epic;Activity"));True(File.ReadAllText(csv).Contains("Comentario"));Equal(1,new TimeRepository(backup).Day(DateTime.Today).Count);
 });
 Run("La migración conserva la base portable más reciente",()=>{
     var directory=Path.Combine(Path.GetTempPath(),"TimeTracker.Tests",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);

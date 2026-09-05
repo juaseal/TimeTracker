@@ -1,5 +1,5 @@
 # Avisos de terceros
 
-TimeTracker utiliza Microsoft.Data.Sqlite 10.0.11, distribuido por Microsoft bajo licencia MIT, y sus dependencias SQLitePCLRaw/SQLite. Antes de cada publicación debe generarse y verificarse el inventario final de dependencias del paquete.
+TaskUp uses Microsoft.Data.Sqlite 10.0.11, distributed by Microsoft under the MIT License, together with its SQLitePCLRaw/SQLite dependencies. Before each release, the final package dependency inventory must be generated and verified.
 
-La aplicación y sus recursos propios permanecen bajo la licencia comercial que determine el editor. Este archivo no sustituye al texto completo de las licencias de terceros que deberá acompañar al producto final.
+The application and its original assets remain under the commercial license selected by the publisher. This file does not replace the complete third-party license texts that must accompany the final product.

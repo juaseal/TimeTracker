@@ -1,7 +1,7 @@
 <Window x:Class="TimeTracker.WidgetWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TimeTracker Widget" Icon="Assets/TimeTracker.ico" Width="390" Height="500"
+        Title="TaskUp Widget" Icon="Assets/TimeTracker.ico" Width="390" Height="500"
         MinWidth="340" MinHeight="390" WindowStyle="None" ResizeMode="CanResizeWithGrip"
         AllowsTransparency="True" Background="Transparent" ShowInTaskbar="True"
         PreviewKeyDown="WidgetKeyDown" Closing="WidgetClosing">
@@ -10,47 +10,45 @@
             <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="5" Opacity="0.18" Color="#182230"/></Border.Effect>
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                <Grid MouseLeftButtonDown="HeaderMouseDown" Cursor="SizeAll" AutomationProperties.Name="Mover widget">
+                <Grid MouseLeftButtonDown="HeaderMouseDown" Cursor="SizeAll" AutomationProperties.Name="Move widget">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Border Width="34" Height="34" CornerRadius="9" Background="{DynamicResource Accent}">
                         <Path Data="{StaticResource ClockIcon}" Width="17" Height="17" Stretch="Uniform" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                        <TextBlock Text="TimeTracker" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeMedium}"/>
-                        <TextBlock Text="Modo widget" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeSmall}"/>
+                        <TextBlock Text="TaskUp" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeMedium}"/>
+                        <TextBlock Text="Widget mode" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeSmall}"/>
                     </StackPanel>
-                    <Button Grid.Column="2" Content="Abrir aplicación" Click="OpenFullClick" Padding="10,5" MinHeight="32" ToolTip="Volver a la aplicación completa" Cursor="Hand"/>
+                    <Button Grid.Column="2" Content="Open application" Click="OpenFullClick" Padding="10,5" MinHeight="32" ToolTip="Return to the full application" Cursor="Hand"/>
                 </Grid>
 
                 <Border Grid.Row="2" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="12" Padding="14">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <TextBlock x:Name="WidgetStateText" Text="SIN TAREA ACTIVA" Foreground="{DynamicResource TextSecondary}" FontWeight="Bold" FontSize="{DynamicResource FontSizeTiny}"/>
-                        <TextBlock x:Name="WidgetTitle" Grid.Row="1" Text="Sin tarea activa" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="WidgetDetail" Grid.Row="2" Text="Selecciona una tarea reciente" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap" MaxHeight="42"/>
+                        <TextBlock x:Name="WidgetStateText" Text="NO ACTIVE TASK" Foreground="{DynamicResource TextSecondary}" FontWeight="Bold" FontSize="{DynamicResource FontSizeTiny}"/>
+                        <TextBlock x:Name="WidgetTitle" Grid.Row="1" Text="No active task" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="WidgetDetail" Grid.Row="2" Text="Select a recent task" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap" MaxHeight="42"/>
                         <TextBlock x:Name="WidgetClock" Grid.Row="3" Text="00:00:00" Foreground="{DynamicResource Accent}" FontSize="{DynamicResource FontSizeWidgetClock}" FontWeight="Light" Margin="0,10,0,0" HorizontalAlignment="Center"/>
                     </Grid>
                 </Border>
 
                 <Grid Grid.Row="3" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <Button Content="Detener" Click="StopClick" Style="{StaticResource DangerButton}" AutomationProperties.Name="Detener tarea activa"/>
-                    <Button Grid.Column="1" Content="Iniciar" Click="StartClick" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Iniciar tarea seleccionada"/>
+                    <Button Content="Stop" Click="StopClick" Style="{StaticResource DangerButton}" AutomationProperties.Name="Stop active task"/>
+                    <Button Grid.Column="1" Content="Start" Click="StartClick" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Start selected task"/>
                 </Grid>
 
-                <TextBlock Grid.Row="4" Text="Tareas recientes" FontWeight="SemiBold" Margin="4,10,4,4"/>
-                <ListBox x:Name="WidgetRecentList" Grid.Row="5" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Tareas favoritas y recientes">
+                <TextBlock Grid.Row="4" Text="Recent tasks" FontWeight="SemiBold" Margin="4,10,4,4"/>
+                <ListBox x:Name="WidgetRecentList" Grid.Row="5" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Favorite and recent tasks">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border BorderBrush="{DynamicResource BorderStrong}" BorderThickness="{Binding SeparatorThickness}" Padding="0,4,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <Button Tag="{Binding}" Click="FavoriteClick" Content="{Binding FavoriteGlyph}" ToolTip="Añadir o quitar de favoritos" Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0" Padding="2" Margin="0,0,7,0"/>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{Binding Activity}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding Display}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding CommentText}" FontSize="{DynamicResource FontSizeSmall}" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
+                                    <Button Tag="{Binding}" Click="FavoriteClick" Content="{Binding FavoriteGlyph}" ToolTip="Add or remove from favorites" Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0" Padding="2" Margin="0,0,7,0"/>
+                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding DisplayFields}">
+                                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" FontWeight="{Binding FontWeight}" FontSize="{DynamicResource FontSizeCaption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text}"/></DataTemplate></ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </Grid>
                             </Border>
                         </DataTemplate>

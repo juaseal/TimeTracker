@@ -5,18 +5,18 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>TimeTracker</AssemblyName>
+    <AssemblyName>TaskUp</AssemblyName>
     <RootNamespace>TimeTracker</RootNamespace>
     <ApplicationIcon>Assets\TimeTracker.ico</ApplicationIcon>
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Authors>TimeTracker</Authors>
-    <Company>TimeTracker</Company>
-    <Product>TimeTracker</Product>
-    <Description>Registro personal de tiempo para Windows con resúmenes preparados para SAP.</Description>
-    <Copyright>Copyright © 2026 TimeTracker</Copyright>
-    <NeutralLanguage>es-ES</NeutralLanguage>
+    <Authors>TaskUp</Authors>
+    <Company>TaskUp</Company>
+    <Product>TaskUp</Product>
+    <Description>Personal time tracking for Windows with SAP-ready summaries.</Description>
+    <Copyright>Copyright © 2026 TaskUp</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -27,5 +27,8 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\TimeTracker.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 </Project>

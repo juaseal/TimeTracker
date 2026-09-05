@@ -474,6 +474,8 @@
             <Setter Property="BorderBrush" Value="{DynamicResource GridLine}"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
             <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style TargetType="DataGridCell">
@@ -481,6 +483,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Padding" Value="8,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="{DynamicResource SelectionSurface}"/><Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/></Trigger>
             </Style.Triggers>

@@ -1,4 +1,4 @@
-# TimeTracker
+# TaskUp
 
 Aplicación de escritorio para Windows que permite registrar el tiempo por proyecto, épica, actividad y comentario.
 
@@ -36,7 +36,7 @@ La base de datos se guarda por usuario en %LocalAppData%\TimeTracker\timetracker
 2. Elige el perfil **Portable-win-x64**.
 3. Pulsa **Publicar**.
 
-El perfil genera `TimeTracker.exe` como un ejecutable único y autocontenido en `bin\Release\net10.0-windows\win-x64\publish`. No necesita instalar .NET en el equipo de destino. Las bibliotecas nativas están incluidas dentro del EXE y .NET las extrae automáticamente al arrancar.
+El perfil genera `TaskUp.exe` como un ejecutable único y autocontenido en `bin\Release\net10.0-windows\win-x64\publish`. No necesita instalar .NET en el equipo de destino. Las bibliotecas nativas están incluidas dentro del EXE y .NET las extrae automáticamente al arrancar.
 
 
 dotnet restore .\TimeTracker.csproj -r win-x64

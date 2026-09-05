@@ -13,8 +13,8 @@ public sealed class ActivitySuggestion
     public DateTime Start { get; set; }
     public DateTime? End { get; set; }
     public string Display => $"{Epic} · {Activity}";
-    public string TimeText => $"{Start:dd/MM/yyyy HH:mm} – {(End is null ? "en curso" : End.Value.ToString("HH:mm"))}";
-    public string CommentText => string.IsNullOrWhiteSpace(Comment) ? "Sin comentario" : Comment;
+    public string TimeText => $"{Start:dd/MM/yyyy HH:mm} – {(End is null ? "running" : End.Value.ToString("HH:mm"))}";
+    public string CommentText => string.IsNullOrWhiteSpace(Comment) ? "No comment" : Comment;
     public List<RecentDisplayField> DisplayFields { get; set; } = new();
     public bool IsFavorite { get; set; }
     public string FavoriteGlyph => IsFavorite ? "★" : "☆";
@@ -86,5 +86,5 @@ public sealed class SummaryRow : INotifyPropertyChanged
 public sealed class ScheduleTemplate { public long Id { get; set; } public string Name { get; set; } = ""; public override string ToString()=>Name; }
 public sealed class ScheduleDay { public int DayOfWeek { get; set; } public string Day { get; set; } = ""; public double Hours { get; set; } }
 public sealed class CalendarPeriodRow { public long Id { get; set; } public string Name { get; set; } = ""; public string StartText { get; set; } = "01/01"; public string EndText { get; set; } = "31/12"; public long TemplateId { get; set; } public string TemplateName { get; set; } = ""; }
-public sealed class WeekDayTotal { public DateTime Day { get; set; } public TimeSpan Total { get; set; } public double ExpectedHours { get; set; } public string DayText=>Day.ToString("ddd dd/MM"); public string TotalText=>SessionRow.Format(Total); public string ExpectedText=>SessionRow.Format(TimeSpan.FromHours(ExpectedHours)); public double DifferenceHours=>Total.TotalHours-ExpectedHours; public string StatusText=>ExpectedHours<=0?"Libre":DifferenceHours switch { > 0.01=>$"+{SessionRow.Format(TimeSpan.FromHours(DifferenceHours))}", < -0.01=>$"-{SessionRow.Format(TimeSpan.FromHours(-DifferenceHours))}", _=>"OK"}; public Brush StatusBrush=>ExpectedHours<=0?Brushes.Gray:DifferenceHours>0.01?Brushes.Firebrick:DifferenceHours< -0.01?Brushes.DarkOrange:Brushes.ForestGreen; }
+public sealed class WeekDayTotal { public DateTime Day { get; set; } public TimeSpan Total { get; set; } public double ExpectedHours { get; set; } public string DayText=>Day.ToString("ddd dd/MM"); public string TotalText=>SessionRow.Format(Total); public string ExpectedText=>SessionRow.Format(TimeSpan.FromHours(ExpectedHours)); public double DifferenceHours=>Total.TotalHours-ExpectedHours; public string StatusText=>ExpectedHours<=0?"Off":DifferenceHours switch { > 0.01=>$"+{SessionRow.Format(TimeSpan.FromHours(DifferenceHours))}", < -0.01=>$"-{SessionRow.Format(TimeSpan.FromHours(-DifferenceHours))}", _=>"OK"}; public Brush StatusBrush=>ExpectedHours<=0?Brushes.Gray:DifferenceHours>0.01?Brushes.Firebrick:DifferenceHours< -0.01?Brushes.DarkOrange:Brushes.ForestGreen; }
 public sealed class ReportSlice { public string Label { get; set; } = ""; public double Hours { get; set; } public string HoursText=>SessionRow.Format(TimeSpan.FromHours(Hours)); public double Percentage { get; set; } public string PercentageText=>$"{Percentage:0.#}%"; }

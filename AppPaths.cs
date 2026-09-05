@@ -4,6 +4,7 @@ namespace TimeTracker;
 
 public static class AppPaths
 {
+    // Keep the historical storage folder so TaskUp reuses existing user data.
     public const string ProductName = "TimeTracker";
     public static string DataDirectory { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductName);
     public static string DatabasePath => Path.Combine(DataDirectory, "timetracker.db");

@@ -5,16 +5,16 @@
          IgnorableNamespaces="uap rescap">
   <Identity Name="__PACKAGE_IDENTITY_NAME__" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="__ARCHITECTURE__"/>
   <Properties>
-    <DisplayName>TimeTracker</DisplayName>
+    <DisplayName>TaskUp</DisplayName>
     <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
-    <Description>Registro personal de tiempo con resúmenes preparados para SAP.</Description>
+    <Description>Personal time tracking with SAP-ready summaries.</Description>
     <Logo>AssetsStoreLogo.png</Logo>
   </Properties>
-  <Resources><Resource Language="es-es"/></Resources>
+  <Resources><Resource Language="en-us"/></Resources>
   <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0"/></Dependencies>
   <Applications>
-    <Application Id="App" Executable="TimeTracker.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="TimeTracker" Description="Registro personal de tiempo con resúmenes preparados para SAP." BackgroundColor="transparent" Square44x44Logo="AssetsSquare44x44Logo.png" Square150x150Logo="AssetsSquare150x150Logo.png">
+    <Application Id="App" Executable="TaskUp.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="TaskUp" Description="Personal time tracking with SAP-ready summaries." BackgroundColor="transparent" Square44x44Logo="AssetsSquare44x44Logo.png" Square150x150Logo="AssetsSquare150x150Logo.png">
         <uap:DefaultTile Wide310x150Logo="AssetsWide310x150Logo.png"/>
       </uap:VisualElements>
     </Application>

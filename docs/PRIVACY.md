@@ -1,25 +1,25 @@
-# Política de privacidad de TimeTracker
+# TaskUp Privacy Policy
 
-Última actualización: 3 de septiembre de 2026.
+Last updated: September 5, 2026.
 
-TimeTracker es una aplicación de escritorio para registrar tiempo de trabajo. La versión actual funciona íntegramente en el dispositivo del usuario.
+TaskUp is a desktop application for tracking work time. The current version runs entirely on the user's device.
 
-## Datos tratados
+## Data processed
 
-La aplicación almacena proyecto, épica, actividad, comentarios, horas de inicio y fin, calendario laboral, favoritos y preferencias. Estos datos se guardan localmente en el perfil de Windows del usuario.
+The application stores projects, epics, activities, comments, start and end times, work calendars, favorites, and preferences. This data is stored locally in the user's Windows profile.
 
-## Transmisión y telemetría
+## Data transmission and telemetry
 
-TimeTracker no transmite registros de actividad, no utiliza servicios de analítica, publicidad ni telemetría y no crea cuentas de usuario.
+TaskUp does not transmit activity records, use analytics, advertising, or telemetry, and does not create user accounts.
 
-## Diagnóstico
+## Diagnostics
 
-Si se produce un error, la aplicación puede crear un archivo de diagnóstico local. Este archivo no se envía automáticamente. El usuario decide si lo comparte con soporte.
+If an error occurs, the application may create a local diagnostic file. This file is not sent automatically. The user decides whether to share it with support.
 
-## Control de los datos
+## User control
 
-Desde Configuración se puede exportar el historial en CSV, crear una copia de seguridad y abrir la carpeta donde se almacenan los datos. Desinstalar la aplicación puede no eliminar los datos conservados por Windows; el usuario puede eliminarlos manualmente desde esa carpeta.
+Settings lets users export their history as CSV, create a backup, and open the folder where their data is stored. Uninstalling the application may not remove data retained by Windows; users can delete it manually from that folder.
 
-## Contacto
+## Contact
 
-Antes de publicar, sustituir esta sección por el correo y la URL pública de privacidad del editor.
+For privacy questions or support, contact Ahoui at m4gom1s1983@gmail.com.

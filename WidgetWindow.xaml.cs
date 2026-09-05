@@ -21,15 +21,13 @@ public partial class WidgetWindow : Window
         _active=_repo.Active();RefreshClock();_refreshing=true;
         try
         {
-            var favorites=_repo.Favorites();var recent=_repo.Recent().Where(x=>!x.IsFavorite).Take(20).ToList();var items=favorites.Concat(recent).ToList();
-            if(favorites.Count>0&&recent.Count>0)items[favorites.Count].SeparatorThickness=new Thickness(0,1,0,0);
-            WidgetRecentList.ItemsSource=items;WidgetRecentList.SelectedItem=null;
+            WidgetRecentList.ItemsSource=_repo.RecentFeed();WidgetRecentList.SelectedItem=null;
         }
         finally{_refreshing=false;}
     }    void RefreshClock()
     {
-        _active=_repo.Active();if(_active is null){WidgetStateText.Text="SIN TAREA ACTIVA";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("TextSecondary");WidgetTitle.Text="Sin tarea activa";WidgetDetail.Text="Selecciona una tarea reciente";WidgetClock.Text="00:00:00";return;}
-        WidgetStateText.Text="REGISTRANDO";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("Success");WidgetTitle.Text=$"{_active.Project} · {_active.Epic}";WidgetDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$" — {_active.Comment}");var elapsed=DateTime.Now-_active.Start;WidgetClock.Text=$"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
+        _active=_repo.Active();if(_active is null){WidgetStateText.Text="NO ACTIVE TASK";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("TextSecondary");WidgetTitle.Text="No active task";WidgetDetail.Text="Select a recent task";WidgetClock.Text="00:00:00";return;}
+        WidgetStateText.Text="TRACKING";WidgetStateText.Foreground=(System.Windows.Media.Brush)FindResource("Success");WidgetTitle.Text=$"{_active.Project} · {_active.Epic}";WidgetDetail.Text=_active.Activity+(string.IsNullOrWhiteSpace(_active.Comment)?"":$" — {_active.Comment}");var elapsed=DateTime.Now-_active.Start;WidgetClock.Text=$"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
     }
     void RecentSelected(object s,System.Windows.Controls.SelectionChangedEventArgs e){if(_refreshing)return;}
     ActivitySuggestion? SelectedTask()=>WidgetRecentList.SelectedItem as ActivitySuggestion;

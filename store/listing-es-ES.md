@@ -1,7 +1,7 @@
 # Ficha de Microsoft Store — es-ES
 
 ## Nombre
-TimeTracker (pendiente de reserva y validación comercial)
+TaskUp (pendiente de reserva y validación comercial)
 
 ## Categoría
 Productividad
@@ -10,7 +10,7 @@ Productividad
 Controla tu jornada y prepara imputaciones semanales para SAP sin enviar tus datos fuera del equipo.
 
 ## Descripción
-TimeTracker permite registrar el tiempo dedicado a proyectos, épicas y actividades desde una aplicación de escritorio rápida y privada. Consulta el detalle diario, revisa el resumen semanal, marca tareas favoritas y copia imputaciones preparadas para SAP con una política de redondeo configurable.
+TaskUp permite registrar el tiempo dedicado a proyectos, épicas y actividades desde una aplicación de escritorio rápida y privada. Consulta el detalle diario, revisa el resumen semanal, marca tareas favoritas y copia imputaciones preparadas para SAP con una política de redondeo configurable.
 
 Los datos permanecen en tu equipo. Puedes exportar el historial a CSV y crear copias de seguridad cuando quieras.
 
