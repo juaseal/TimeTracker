@@ -102,13 +102,13 @@
                             </Border>
                             <Border Grid.Column="4" Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
                                 <StackPanel>
-                                    <TextBlock Text="Modo widget" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Widget mode" FontWeight="SemiBold"/>
                                     <CheckBox x:Name="StartInWidgetBox" Content="Start in widget mode" Margin="5,10,5,3"/>
                                     <CheckBox x:Name="AlwaysOnTopBox" Content="Always on top" Margin="5,3"/>
                                     <TextBlock Text="The widget remembers its position. Escape returns to the full application." TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeSmall}" Margin="5,9,5,0"/>
                                     <Separator Margin="0,12,0,8"/>
                                     <TextBlock Text="Data and support" FontWeight="SemiBold"/>
-                                    <Button Content="Export history CSV" Click="ExportDataClick" Margin="0,7,0,2" AutomationProperties.Name="Exportar historial a CSV"/>
+                                    <Button Content="Export history CSV" Click="ExportDataClick" Margin="0,7,0,2" AutomationProperties.Name="Export history to CSV"/>
                                     <Button Content="Create backup" Click="BackupDataClick" Margin="0,2" AutomationProperties.Name="Create backup"/>
                                     <Button Content="Open data folder" Click="OpenDataFolderClick" Margin="0,2" AutomationProperties.Name="Open data and diagnostics folder"/>
                                     <Button Content="About TaskUp" Click="AboutClick" Margin="0,2" AutomationProperties.Name="Information and privacy"/>
@@ -138,14 +138,14 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="310"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="Template" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="4,0,10,0"/>
                             <ComboBox x:Name="TemplateBox" Grid.Column="1" DisplayMemberPath="Name" SelectionChanged="TemplateSelected"/>
-                            <Button Grid.Column="2" Content="+  Nueva plantilla" Click="NewTemplateClick" HorizontalAlignment="Right"/>
+                            <Button Grid.Column="2" Content="+  New template" Click="NewTemplateClick" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="4">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="330"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <Border Background="{DynamicResource SurfaceMuted}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" Padding="14">
                                 <StackPanel>
-                                    <TextBlock Text="Name de la plantilla" Style="{StaticResource MutedText}"/>
+                                    <TextBlock Text="Template name" Style="{StaticResource MutedText}"/>
                                     <TextBox x:Name="TemplateNameBox" Margin="0,5,0,0"/>
                                     <Border Background="{DynamicResource AccentSoft}" CornerRadius="7" Padding="12" Margin="0,14,0,0">
                                         <StackPanel>
@@ -211,7 +211,7 @@
                                         <StackPanel><TextBlock Text="From (dd/MM)" Style="{StaticResource MutedText}" Margin="4,0"/><TextBox x:Name="PeriodStartBox"/></StackPanel>
                                         <StackPanel Grid.Column="2"><TextBlock Text="To (dd/MM)" Style="{StaticResource MutedText}" Margin="4,0"/><TextBox x:Name="PeriodEndBox"/></StackPanel>
                                     </Grid>
-                                    <StackPanel Grid.Row="4" Margin="0,8,0,0"><TextBlock Text="Template semanal" Style="{StaticResource MutedText}" Margin="4,0"/><ComboBox x:Name="PeriodTemplateBox" DisplayMemberPath="Name"/></StackPanel>
+                                    <StackPanel Grid.Row="4" Margin="0,8,0,0"><TextBlock Text="Weekly template" Style="{StaticResource MutedText}" Margin="4,0"/><ComboBox x:Name="PeriodTemplateBox" DisplayMemberPath="Name"/></StackPanel>
                                     <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                                         <Button Content="New" Click="NewPeriodClick"/>
                                         <Button Content="Delete" Click="DeletePeriodClick" Style="{StaticResource DangerButton}"/>

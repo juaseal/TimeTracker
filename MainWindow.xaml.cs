@@ -97,7 +97,7 @@ public partial class MainWindow : Window
         if(expected>0&&difference>1d/3600){DayStatusText.Text=$"Workday {FormatHours(expected)}{separator}Remaining {FormatHours(difference)}";DayStatusText.Foreground=Brushes.DarkOrange;}
         else if(expected>0&&difference< -1d/3600){DayStatusText.Text=$"Workday {FormatHours(expected)}{separator}Overtime {FormatHours(-difference)}";DayStatusText.Foreground=Brushes.Red;}
         else if(expected>0){DayStatusText.Text=$"Workday complete{separator}{FormatHours(expected)}";DayStatusText.Foreground=Brushes.ForestGreen;}
-        else{DayStatusText.Text=$"D{(char)0x00ED}a sin jornada configurada";DayStatusText.Foreground=Brushes.Gray;}
+        else{DayStatusText.Text="No work schedule configured for this day";DayStatusText.Foreground=Brushes.Gray;}
     }
     static string FormatHours(double hours)=>SessionRow.Format(TimeSpan.FromHours(hours));
     void LoadRoundingPolicy(){_sapRoundingEnabled=_repo.BoolSetting("sap_rounding_enabled");_sapRoundingMinutes=int.TryParse(_repo.Setting("sap_rounding_minutes","30"),out var minutes)&&minutes is >=5 and <=30&&minutes%5==0?minutes:30;}

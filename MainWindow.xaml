@@ -40,7 +40,7 @@
                 </Border>
 
                 <TabControl x:Name="Tabs" Grid.Row="1" SelectionChanged="TabsSelectionChanged" Margin="18,0,18,18">
-                    <TabItem Header="Ahora">
+                    <TabItem Header="Now">
                         <Grid Margin="4,18,4,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1.45*"/>
@@ -114,7 +114,7 @@
                             <Border Grid.Column="2" Grid.RowSpan="3" Style="{StaticResource Card}" Padding="14">
                                 <Grid>
                                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                                    <TextBlock Text="Recent" Style="{StaticResource SectionTitle}" Margin="4,2"/>
+                                    <TextBlock Text="Recent tasks" Style="{StaticResource SectionTitle}" Margin="4,2"/>
                                     <TextBlock Grid.Row="1" Text="Favorites appear first · select a task to resume it" Style="{StaticResource MutedText}" FontSize="{DynamicResource FontSizeCaption}" Margin="4,2,4,10" TextWrapping="Wrap"/>
                                     <ListBox x:Name="RecentList" Grid.Row="2" SelectionChanged="RecentSelected" ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
@@ -193,7 +193,7 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="150"/><ColumnDefinition Width="82"/><ColumnDefinition Width="44"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Button ToolTip="Previous period" Click="PreviousWeekClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Previous period"><Path Data="{StaticResource ChevronLeftIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     <DatePicker x:Name="WeekPicker" Grid.Column="1" SelectedDateChanged="WeekChanged"/>
-                                    <Button Grid.Column="2" Content="Current" ToolTip="Go to the current week" Click="CurrentWeekClick" Width="72" MinWidth="0" Padding="10,8"/>
+                                    <Button Grid.Column="2" Content="This week" ToolTip="Go to the current week" Click="CurrentWeekClick" Width="72" MinWidth="0" Padding="10,8"/>
                                     <Button Grid.Column="3" ToolTip="Next period" Click="NextWeekClick" Style="{StaticResource IconButton}" AutomationProperties.Name="Next period"><Path Data="{StaticResource ChevronRightIcon}" Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Button>
                                     <TextBlock x:Name="WeekNumberText" Grid.Column="4" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0"/>
                                     <TextBlock x:Name="SapPolicyTextBlock" Grid.Column="5" Style="{StaticResource MutedText}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
@@ -234,7 +234,7 @@
                                         </DataGrid>
                                     </Border>
                                 </TabItem>
-                                <TabItem Header="Resumen Project - Epic">
+                                <TabItem Header="Project - Epic summary">
                                     <Border Style="{StaticResource Card}" Padding="0" ClipToBounds="True" Margin="0,8,0,0">
                                         <DataGrid x:Name="WeekSummaryGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" AlternationCount="2" AlternatingRowBackground="{DynamicResource AlternateRow}" HorizontalScrollBarVisibility="Auto" MouseDoubleClick="WeekSummaryCellDoubleClick">
                                             <DataGrid.Columns>
@@ -276,7 +276,7 @@
                             <Grid Grid.Row="2">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <Button x:Name="ReportBackButton" Content="←  Back" Click="ReportBackClick" Visibility="Collapsed"/>
-                                <TextBlock x:Name="ReportLevelText" Grid.Column="1" Text="Time por proyecto" FontSize="{DynamicResource FontSizeReportTitle}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0"/>
+                                <TextBlock x:Name="ReportLevelText" Grid.Column="1" Text="Time by project" FontSize="{DynamicResource FontSizeReportTitle}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0"/>
                             </Grid>
                             <Grid Grid.Row="4">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="1.2*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="0.8*"/></Grid.ColumnDefinitions>

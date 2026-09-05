@@ -71,6 +71,11 @@ public sealed class TimeRepository
         INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('epic',2,1,0);
         INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('comment',3,1,0);
         INSERT OR IGNORE INTO recent_field_settings(field_key,display_order,is_visible,is_bold) VALUES('time',4,1,0);
+        UPDATE schedule_templates SET name='September–June schedule' WHERE name='Jornada septiembre-junio';
+        UPDATE schedule_templates SET name='July–August schedule' WHERE name='Jornada julio-agosto';
+        UPDATE calendar_periods SET name='Regular schedule (January–June)' WHERE name='Jornada ordinaria (enero-junio)';
+        UPDATE calendar_periods SET name='Summer schedule' WHERE name='Jornada de verano';
+        UPDATE calendar_periods SET name='Regular schedule (September–December)' WHERE name='Jornada ordinaria (septiembre-diciembre)';
         DELETE FROM weekly_adjustments WHERE ABS(hours) < 0.000000001;
         DELETE FROM calendar_periods WHERE NOT EXISTS(SELECT 1 FROM schedule_templates WHERE id=calendar_periods.template_id);
         DELETE FROM schedule_template_days WHERE NOT EXISTS(SELECT 1 FROM schedule_templates WHERE id=schedule_template_days.template_id);
