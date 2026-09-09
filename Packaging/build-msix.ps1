@@ -10,7 +10,10 @@ $architecture=if($RuntimeIdentifier -eq "win-arm64"){"arm64"}else{"x64"}
 $root=Split-Path $PSScriptRoot -Parent
 $stage=Join-Path $root "artifacts\msix\$RuntimeIdentifier"
 $output=Join-Path $root "artifacts\TaskUp-$Version-$architecture.msix"
-$kits=Join-Path ([Environment]::GetFolderPath("ProgramFilesX86")) "Windows Kits\10\bin"
+$installedRoots=Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -ErrorAction SilentlyContinue
+$kitsRoot=$installedRoots.KitsRoot10
+if(-not $kitsRoot){$kitsRoot=Join-Path ([Environment]::GetFolderPath("ProgramFilesX86")) "Windows Kits\10\"}
+$kits=Join-Path $kitsRoot "bin"
 $makeAppx=Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
 if(-not $makeAppx){throw "makeappx.exe was not found. Install the Windows SDK from Visual Studio Installer."}
 if(Test-Path $stage){Remove-Item -LiteralPath $stage -Recurse -Force}
