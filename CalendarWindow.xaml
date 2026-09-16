@@ -18,7 +18,7 @@
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer x:Name="SettingsScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="20">
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
@@ -58,10 +58,10 @@
                                 </StackPanel>
                             </Border>
                             <Grid Grid.Column="2">
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="150"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="330"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" Margin="4,0,0,6"><TextBlock Text="Recent limit" Style="{StaticResource MutedText}" VerticalAlignment="Center"/><ComboBox x:Name="RecentLimitBox" Width="80" Margin="10,0,0,0" IsEditable="True"><ComboBoxItem Content="10"/><ComboBoxItem Content="20"/><ComboBoxItem Content="30"/><ComboBoxItem Content="50"/><ComboBoxItem Content="100"/></ComboBox></StackPanel>
                                 <TextBlock Grid.Row="1" Text="Visible fields · select a row to change its position" Style="{StaticResource MutedText}" Margin="4,0,0,6"/>
-                                <DataGrid x:Name="RecentFieldsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" SelectionUnit="FullRow">
+                                <DataGrid x:Name="RecentFieldsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" SelectionUnit="FullRow" PreviewMouseWheel="TablePreviewMouseWheel">
                                     <DataGrid.Columns>
                                         <DataGridCheckBoxColumn Header="Visible" Binding="{Binding IsVisible, UpdateSourceTrigger=PropertyChanged}" Width="72"/>
                                         <DataGridTextColumn Header="Field" Binding="{Binding Label}" IsReadOnly="True" Width="*"/>
@@ -156,7 +156,7 @@
                                 </StackPanel>
                             </Border>
                             <Border Grid.Column="2" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
-                                <DataGrid x:Name="ScheduleDaysGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserResizeRows="False" RowHeight="25" MinRowHeight="25">
+                                <DataGrid x:Name="ScheduleDaysGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserResizeRows="False" RowHeight="25" MinRowHeight="25" PreviewMouseWheel="TablePreviewMouseWheel">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Day of week" Binding="{Binding Day}" IsReadOnly="True" Width="*"/>
                                         <DataGridTextColumn Header="Hours" Binding="{Binding Hours}" Width="150"/>
@@ -190,7 +190,7 @@
                         <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="390"/></Grid.ColumnDefinitions>
                             <Border BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
-                                <DataGrid x:Name="PeriodsGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="PeriodSelected" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <DataGrid x:Name="PeriodsGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="PeriodSelected" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="TablePreviewMouseWheel">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Period" Binding="{Binding Name}" Width="*"/>
                                         <DataGridTextColumn Header="From" Binding="{Binding StartText}" Width="76"/>

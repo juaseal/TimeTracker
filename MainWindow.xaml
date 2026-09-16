@@ -96,9 +96,9 @@
                                             <ColumnDefinition/>
                                             <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
-                                        <ComboBox x:Name="ProjectBox" Style="{StaticResource EditableHomeComboBox}" IsEditable="True" IsTextSearchEnabled="True" SelectionChanged="ProjectChanged"/>
-                                        <ComboBox x:Name="EpicBox" Grid.Column="1" Style="{StaticResource EditableHomeComboBox}" IsEditable="True"/>
-                                        <ComboBox x:Name="ActivityBox" Grid.Column="2" Style="{StaticResource EditableHomeComboBox}" IsEditable="True" DisplayMemberPath="Display"/>
+                                        <ComboBox x:Name="ProjectBox" Style="{StaticResource EditableHomeComboBox}" IsEditable="True" IsTextSearchEnabled="False" SelectionChanged="ProjectChanged"/>
+                                        <ComboBox x:Name="EpicBox" Grid.Column="1" Style="{StaticResource EditableHomeComboBox}" IsEditable="True" IsTextSearchEnabled="False"/>
+                                        <ComboBox x:Name="ActivityBox" Grid.Column="2" Style="{StaticResource EditableHomeComboBox}" IsEditable="True" IsTextSearchEnabled="False" DisplayMemberPath="Display"/>
                                     </Grid>
                                     <StackPanel Grid.Row="3" Margin="0,8,0,0">
                                         <TextBlock Text="Comment" Style="{StaticResource MutedText}" Margin="4,0"/>

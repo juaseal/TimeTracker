@@ -5,12 +5,14 @@ using System.Reflection;
 using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 namespace TimeTracker;
 public partial class CalendarWindow : Window
 {
     readonly TimeRepository _repo; CalendarPeriodRow? _selectedPeriod; ObservableCollection<RecentFieldSetting> _recentFields=new(); int _weekStartDay=1;
     static readonly WeekStartOption[] WeekDays={new(){Value=1,Name="Monday"},new(){Value=2,Name="Tuesday"},new(){Value=3,Name="Wednesday"},new(){Value=4,Name="Thursday"},new(){Value=5,Name="Friday"},new(){Value=6,Name="Saturday"},new(){Value=7,Name="Sunday"}};
     public CalendarWindow(TimeRepository repo){_repo=repo;InitializeComponent();LoadPreferences();LoadCalendar();}
+    void TablePreviewMouseWheel(object sender,MouseWheelEventArgs e){SettingsScrollViewer.ScrollToVerticalOffset(SettingsScrollViewer.VerticalOffset-e.Delta);e.Handled=true;}
     void LoadPreferences()
     {
         _weekStartDay=_repo.WeekStartDay();WeekStartBox.ItemsSource=WeekDays;WeekStartBox.SelectedValue=_weekStartDay;RecentLimitBox.Text=_repo.RecentLimit().ToString(CultureInfo.InvariantCulture);_recentFields=new ObservableCollection<RecentFieldSetting>(_repo.RecentFieldSettings());RecentFieldsGrid.ItemsSource=_recentFields;

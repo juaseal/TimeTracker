@@ -33,7 +33,7 @@ public partial class MainWindow : Window
     void OpenWidget(){if(_widget?.IsVisible==true){_widget.Activate();return;}_widget=new WidgetWindow(_repo,this);_widget.Closed+=(_,_)=>_widget=null;_widget.Show();Hide();}
     internal void ShowWidgetAtStartup()=>OpenWidget();
     public void RefreshFromWidget(){RefreshAll();RefreshReport();}
-    void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Enter a project, epic, and activity.","TaskUp");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
+    void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x&&(string.Equals(a,x.Activity,StringComparison.OrdinalIgnoreCase)||string.Equals(a,x.Display,StringComparison.OrdinalIgnoreCase))){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Enter a project, epic, and activity.","TaskUp");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
     {

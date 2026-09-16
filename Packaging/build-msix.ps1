@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference="Stop"
 $architecture=if($RuntimeIdentifier -eq "win-arm64"){"arm64"}else{"x64"}
 $root=Split-Path $PSScriptRoot -Parent
-$stage=Join-Path $root "artifacts\msix\$RuntimeIdentifier"
+$stage=Join-Path $root "artifacts\msix\$RuntimeIdentifier-$Version"
 $output=Join-Path $root "artifacts\TaskUp-$Version-$architecture.msix"
 $installedRoots=Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -ErrorAction SilentlyContinue
 $kitsRoot=$installedRoots.KitsRoot10
