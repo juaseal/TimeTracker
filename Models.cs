@@ -44,18 +44,21 @@ public sealed class WeekSummaryRow
     public string ProjectEpic => $"{Project} - {Epic}";
     public string[] DayHours { get; set; } = new string[7];
 }
-public sealed class SessionRow
+public sealed class SessionRow : INotifyPropertyChanged
 {
     public long Id { get; set; }
-    public DateTime Start { get; set; }
-    public DateTime? End { get; set; }
-    public string Project { get; set; } = "";
-    public string Epic { get; set; } = "";
-    public string Activity { get; set; } = "";
-    public string Comment { get; set; } = "";
+    DateTime _start; DateTime? _end; string _project="",_epic="",_activity="",_comment="";
+    public DateTime Start { get=>_start; set{if(_start==value)return;_start=value;Changed();Changed(nameof(StartText));Changed(nameof(Duration));} }
+    public DateTime? End { get=>_end; set{if(_end==value)return;_end=value;Changed();Changed(nameof(EndText));Changed(nameof(Duration));} }
+    public string Project { get=>_project; set{if(_project==value)return;_project=value;Changed();} }
+    public string Epic { get=>_epic; set{if(_epic==value)return;_epic=value;Changed();} }
+    public string Activity { get=>_activity; set{if(_activity==value)return;_activity=value;Changed();} }
+    public string Comment { get=>_comment; set{if(_comment==value)return;_comment=value;Changed();} }
     public string StartText { get => Start.ToString("HH:mm"); set { if (TryParseTime(value, out var t)) Start = Start.Date + t; } }
     public string EndText { get => End?.ToString("HH:mm") ?? "…"; set { if (string.IsNullOrWhiteSpace(value) || value == "…") End = null; else if (TryParseTime(value, out var t)) End = Start.Date + t; } }
     public string Duration => Format((End ?? DateTime.Now) - Start);
+    public event PropertyChangedEventHandler? PropertyChanged;
+    void Changed([CallerMemberName]string? name=null)=>PropertyChanged?.Invoke(this,new(name));
     public static string Format(TimeSpan value) => $"{(int)value.TotalHours:00}:{value.Minutes:00}";
     static bool TryParseTime(string? value, out TimeSpan time)
     {

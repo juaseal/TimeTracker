@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory=$true)][string]$Publisher,
     [Parameter(Mandatory=$true)][string]$PublisherDisplayName,
     [ValidateSet("win-x64","win-arm64")][string]$RuntimeIdentifier="win-x64",
-    [string]$Version="1.0.0.0"
+    [string]$Version="1.0.0.0",
+    [switch]$NoRestore
 )
 $ErrorActionPreference="Stop"
 $architecture=if($RuntimeIdentifier -eq "win-arm64"){"arm64"}else{"x64"}
@@ -18,7 +19,9 @@ $makeAppx=Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction Silentl
 if(-not $makeAppx){throw "makeappx.exe was not found. Install the Windows SDK from Visual Studio Installer."}
 if(Test-Path $stage){Remove-Item -LiteralPath $stage -Recurse -Force}
 New-Item -ItemType Directory -Force $stage,(Split-Path $output -Parent) | Out-Null
-dotnet publish (Join-Path $root "TimeTracker.csproj") -c Release -r $RuntimeIdentifier --self-contained true -p:PublishSingleFile=false -o $stage
+$publishArgs=@("publish",(Join-Path $root "TimeTracker.csproj"),"-c","Release","-r",$RuntimeIdentifier,"--self-contained","true","-p:PublishSingleFile=false","-o",$stage)
+if($NoRestore){$publishArgs+="--no-restore"}
+dotnet @publishArgs
 if($LASTEXITCODE -ne 0){throw "dotnet publish exited with code $LASTEXITCODE"}
 Copy-Item (Join-Path $PSScriptRoot "Assets") (Join-Path $stage "Assets") -Recurse -Force
 $manifest=[IO.File]::ReadAllText((Join-Path $PSScriptRoot "Package.appxmanifest.template"))

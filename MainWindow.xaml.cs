@@ -14,7 +14,69 @@ public partial class MainWindow : Window
     readonly TimeRepository _repo; readonly DispatcherTimer _timer=new(){Interval=TimeSpan.FromSeconds(1)}; readonly Stack<Action> _undo=new(); SessionRow? _active; SessionRow? _editBefore; bool _undoing; string? _reportProject; string? _reportEpic; string? _reportActivity; int _lastMainTabIndex; bool _openingSettings; int _weekStartDay=1; bool _sapRoundingEnabled; int _sapRoundingMinutes=30; List<RecentFieldSetting> _recentFieldSettings=new(); WidgetWindow? _widget;
     static readonly Brush[] ReportColors={new SolidColorBrush(Color.FromRgb(109,93,251)),new SolidColorBrush(Color.FromRgb(39,131,106)),new SolidColorBrush(Color.FromRgb(235,150,48)),new SolidColorBrush(Color.FromRgb(211,78,94)),new SolidColorBrush(Color.FromRgb(55,136,216)),new SolidColorBrush(Color.FromRgb(151,91,178)),new SolidColorBrush(Color.FromRgb(76,164,84)),new SolidColorBrush(Color.FromRgb(210,112,45))};
     public MainWindow():this(new TimeRepository()){}
-    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();ProjectBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));EpicBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));ActivityBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
+    internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();HistoryHost.Content=new HistoryView(_repo,()=>{RefreshAll();RefreshReport();});ProjectBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));EpicBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));ActivityBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
+    readonly DispatcherTimer _commentSearchTimer=new(){Interval=TimeSpan.FromMilliseconds(180)};
+    bool _applyingComment;
+    void CommentTextChanged(object sender,TextChangedEventArgs e)
+    {
+        _commentSearchTimer.Stop();
+        if(CommentPopup is null)return;
+        CommentPopup.IsOpen=false;
+        if(_applyingComment||!CommentBox.IsKeyboardFocused||string.IsNullOrWhiteSpace(CommentBox.Text))return;
+        _commentSearchTimer.Tick-=SearchComments;
+        _commentSearchTimer.Tick+=SearchComments;
+        _commentSearchTimer.Start();
+    }
+    void SearchComments(object? sender,EventArgs e)
+    {
+        _commentSearchTimer.Stop();
+        if(!CommentBox.IsKeyboardFocused)return;
+        var matches=_repo.FindComments(CommentBox.Text);
+        CommentSuggestions.ItemsSource=matches;
+        CommentSuggestions.SelectedIndex=-1;
+        CommentPopup.IsOpen=matches.Count>0;
+    }
+    void CommentLostFocus(object sender,KeyboardFocusChangedEventArgs e)
+    {
+        _commentSearchTimer.Stop();
+        CommentPopup.IsOpen=false;
+    }
+    void CommentKeyDown(object sender,KeyEventArgs e)
+    {
+        if(e.Key==Key.Escape)
+        {
+            _commentSearchTimer.Stop();CommentPopup.IsOpen=false;return;
+        }
+        if(e.Key is Key.Down or Key.Up)
+        {
+            if(!CommentPopup.IsOpen)SearchComments(null,EventArgs.Empty);
+            if(!CommentPopup.IsOpen)return;
+            var index=CommentSuggestions.SelectedIndex;
+            CommentSuggestions.SelectedIndex=e.Key==Key.Down
+                ?Math.Min(index+1,CommentSuggestions.Items.Count-1)
+                :index<0?CommentSuggestions.Items.Count-1:Math.Max(0,index-1);
+            CommentSuggestions.ScrollIntoView(CommentSuggestions.SelectedItem);
+            e.Handled=true;
+        }
+        else if(e.Key==Key.Enter&&CommentPopup.IsOpen&&CommentSuggestions.SelectedItem is string comment)
+        {
+            ApplyComment(comment);e.Handled=true;
+        }
+    }
+    void CommentSuggestionClick(object sender,MouseButtonEventArgs e)
+    {
+        if(ItemsControl.ContainerFromElement(CommentSuggestions,e.OriginalSource as DependencyObject) is ListBoxItem { Content: string comment })
+        {
+            ApplyComment(comment);e.Handled=true;
+        }
+    }
+    void ApplyComment(string comment)
+    {
+        _commentSearchTimer.Stop();
+        _applyingComment=true;
+        try{CommentBox.Text=comment;CommentBox.CaretIndex=comment.Length;CommentPopup.IsOpen=false;}
+        finally{_applyingComment=false;}
+    }
     List<ActivitySuggestion> CombinedRecent(string? project=null)=>_repo.RecentFeed(project);
     void RefreshRecent(){_recentFieldSettings=_repo.RecentFieldSettings();var recent=CombinedRecent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
     void RefreshClock()
@@ -216,7 +278,7 @@ public partial class MainWindow : Window
         if(Same(before,row))return;
         PushRestore(row,before);_repo.Save(row);DayGrid.Items.Refresh();RefreshDayStatus();LoadWeek();RefreshRecent();RestoreCellFocus(row,columnIndex);
     }
-    void WindowKeyDown(object s,KeyEventArgs e){if((Keyboard.Modifiers&ModifierKeys.Control)!=0&&e.Key==Key.Z){UndoLast();e.Handled=true;}}
+    void WindowKeyDown(object s,KeyEventArgs e){if(Tabs.SelectedItem==HistoryTab)return;if((Keyboard.Modifiers&ModifierKeys.Control)!=0&&e.Key==Key.Z){UndoLast();e.Handled=true;}}
     void CopyCell()
     {
         if(DayGrid.CurrentCell.Item is not SessionRow row||DayGrid.CurrentCell.Column is null)return;
@@ -265,7 +327,7 @@ public partial class MainWindow : Window
         }
         DayGrid.Focus();
     }
-    static DataGridCell? FindCell(DependencyObject parent,DataGridColumn column)
+    internal static DataGridCell? FindCell(DependencyObject parent,DataGridColumn column)
     {
         for(var i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++)
         {
@@ -311,7 +373,7 @@ public partial class MainWindow : Window
     void OpenSettingsClick(object s,RoutedEventArgs e)=>ShowSettings();
     void TabsSelectionChanged(object s,SelectionChangedEventArgs e)
     {
-        if(SettingsTab is null||Tabs.SelectedItem!=SettingsTab){if(Tabs.SelectedIndex>=0)_lastMainTabIndex=Tabs.SelectedIndex;return;}if(_openingSettings)return;_openingSettings=true;Tabs.SelectedIndex=Math.Clamp(_lastMainTabIndex,0,3);ShowSettings();_openingSettings=false;
+        if(SettingsTab is null||Tabs.SelectedItem!=SettingsTab){if(Tabs.SelectedIndex>=0)_lastMainTabIndex=Tabs.SelectedIndex;return;}if(_openingSettings)return;_openingSettings=true;Tabs.SelectedIndex=Math.Clamp(_lastMainTabIndex,0,4);ShowSettings();_openingSettings=false;
     }
     void ReportDatesChanged(object s,SelectionChangedEventArgs e){if(IsLoaded)RefreshReport();}
     void RefreshReportClick(object s,RoutedEventArgs e)=>RefreshReport();

@@ -120,6 +120,24 @@ public sealed class TimeRepository
             : "SELECT s.id,s.project,s.epic,s.activity,s.comment,s.start,s.end,CASE WHEN f.project IS NULL THEN 0 ELSE 1 END FROM (SELECT *,ROW_NUMBER() OVER(PARTITION BY project,epic,activity ORDER BY start DESC,id DESC) AS position FROM sessions WHERE project=$p) s LEFT JOIN favorite_activities f ON f.project=s.project AND f.epic=s.epic AND f.activity=s.activity WHERE s.position=1 ORDER BY s.start DESC LIMIT 50";
         q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6)),IsFavorite=r.GetInt32(7)!=0});return x;
     }
+    public List<string> FindComments(string text,int limit=10)
+    {
+        var result=new List<string>();
+        var query=text.Trim();
+        if(query.Length==0||limit<=0)return result;
+        using var c=Open();using var command=c.CreateCommand();
+        command.CommandText="SELECT comment FROM sessions WHERE trim(comment)<>'' ORDER BY start DESC,id DESC";
+        using var reader=command.ExecuteReader();
+        var seen=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while(reader.Read())
+        {
+            var comment=reader.GetString(0).Trim();
+            if(!comment.Contains(query,StringComparison.OrdinalIgnoreCase)||!seen.Add(comment))continue;
+            result.Add(comment);
+            if(result.Count==limit)break;
+        }
+        return result;
+    }
     public string? LastComment(string project,string epic,string activity)
     {
         using var c=Open();using var q=c.CreateCommand();
@@ -142,6 +160,38 @@ public sealed class TimeRepository
         q.Parameters.AddWithValue("$p",project??"");using var r=q.ExecuteReader();var x=new List<ActivitySuggestion>();while(r.Read())x.Add(new(){Id=r.GetInt64(0),Project=r.GetString(1),Epic=r.GetString(2),Activity=r.GetString(3),Comment=r.GetString(4),Start=DateTime.Parse(r.GetString(5)),End=r.IsDBNull(6)?null:DateTime.Parse(r.GetString(6)),IsFavorite=true});return x;
     }
     public List<SessionRow> Day(DateTime day){using var c=Open();using var q=c.CreateCommand();q.CommandText="SELECT id,project,epic,activity,comment,start,end FROM sessions WHERE start >= $a AND start < $b ORDER BY start";q.Parameters.AddWithValue("$a",day.Date.ToString("O"));q.Parameters.AddWithValue("$b",day.Date.AddDays(1).ToString("O"));using var r=q.ExecuteReader();var x=new List<SessionRow>();while(r.Read())x.Add(Read(r));return x;}
+    public List<SessionRow> SearchHistory(string? query=null)
+    {
+        using var c=Open();using var q=c.CreateCommand();
+        q.CommandText="SELECT id,project,epic,activity,comment,start,end FROM sessions ORDER BY start DESC,id DESC";
+        using var r=q.ExecuteReader();var rows=new List<SessionRow>();
+        var search=(query??"").Trim();
+        while(r.Read())
+        {
+            var row=Read(r);
+            if(search.Length==0||row.Project.Contains(search,StringComparison.OrdinalIgnoreCase)
+                ||row.Epic.Contains(search,StringComparison.OrdinalIgnoreCase)
+                ||row.Activity.Contains(search,StringComparison.OrdinalIgnoreCase)
+                ||row.Comment.Contains(search,StringComparison.OrdinalIgnoreCase))rows.Add(row);
+        }
+        return rows;
+    }
+    public void SaveHistoryBatch(IEnumerable<SessionRow> rows)
+    {
+        using var c=Open();using var transaction=c.BeginTransaction();
+        foreach(var row in rows)
+        {
+            using var q=c.CreateCommand();q.Transaction=transaction;
+            q.CommandText="UPDATE sessions SET project=$p,epic=$e,activity=$a,comment=$c,start=$s,end=$n WHERE id=$id";
+            q.Parameters.AddWithValue("$p",row.Project);q.Parameters.AddWithValue("$e",row.Epic);
+            q.Parameters.AddWithValue("$a",row.Activity);q.Parameters.AddWithValue("$c",row.Comment);
+            q.Parameters.AddWithValue("$s",row.Start.ToString("O"));
+            q.Parameters.AddWithValue("$n",row.End is null?DBNull.Value:row.End.Value.ToString("O"));
+            q.Parameters.AddWithValue("$id",row.Id);
+            if(q.ExecuteNonQuery()!=1)throw new InvalidOperationException("This record no longer exists. Refresh the history.");
+        }
+        transaction.Commit();
+    }
     public void Save(SessionRow s)
     {
         using var c=Open();using var q=c.CreateCommand();

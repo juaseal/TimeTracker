@@ -5,10 +5,12 @@ Aplicación de escritorio para Windows que permite registrar el tiempo por proye
 ## Funciones principales
 
 - Cronómetro con tareas recientes.
+- Sugerencias en Comment: busca texto en comentarios de todo el historial, sin distinguir mayúsculas, con hasta 10 resultados únicos y recientes primero. Selecciona con el ratón o flechas y Enter; Escape cierra la lista.
 - Edición directa del parte diario, portapapeles y deshacer.
 - Resumen semanal agrupado por día y preparado para SAP.
 - Jornadas configurables mediante plantillas y periodos de calendario.
 - Informes navegables por proyecto, épica, tarea y comentario.
+- Pestaña History: búsqueda por proyecto, épica, actividad o comentario en todo el historial, tabla de fechas, horas, épicas, actividades y comentarios. Edición directa en las celdas con guardado automático. Intro selecciona el contenido para reemplazarlo; Ctrl+C copia, Ctrl+V pega un campo en las celdas seleccionadas o un rango desde Excel, y Ctrl+Z revierte la última edición o pegado. Las sesiones nocturnas conservan la fecha de fin.
 - Almacenamiento local mediante SQLite.
 
 ## Desarrollo
