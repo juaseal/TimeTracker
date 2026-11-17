@@ -17,9 +17,12 @@ public partial class MainWindow : Window
     internal MainWindow(TimeRepository repo){_repo=repo;var appearance=AppearanceManager.Load(_repo);AppearanceManager.Apply(appearance);InitializeComponent();HistoryHost.Content=new HistoryView(_repo,()=>{RefreshAll();RefreshReport();});ProjectBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));EpicBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));ActivityBox.AddHandler(TextBox.TextChangedEvent,new TextChangedEventHandler(NowFieldTextChanged));Topmost=_repo.BoolSetting("always_on_top",true);_weekStartDay=_repo.WeekStartDay();LoadRoundingPolicy();_recentFieldSettings=_repo.RecentFieldSettings();DayPicker.SelectedDate=DateTime.Today;WeekPicker.SelectedDate=StartOfWeek(DateTime.Today);ReportFromPicker.SelectedDate=DateTime.Today.AddMonths(-1);ReportToPicker.SelectedDate=DateTime.Today;_timer.Tick+=(_,_)=>RefreshClock();_timer.Start();RefreshAll();RefreshReport();}
     readonly DispatcherTimer _commentSearchTimer=new(){Interval=TimeSpan.FromMilliseconds(180)};
     bool _applyingComment;
+    bool _updatingNowFields;
+    DispatcherOperation? _pendingNowComment;
     void CommentTextChanged(object sender,TextChangedEventArgs e)
     {
         _commentSearchTimer.Stop();
+        _pendingNowComment?.Abort();
         if(CommentPopup is null)return;
         CommentPopup.IsOpen=false;
         if(_applyingComment||!CommentBox.IsKeyboardFocused||string.IsNullOrWhiteSpace(CommentBox.Text))return;
@@ -78,7 +81,33 @@ public partial class MainWindow : Window
         finally{_applyingComment=false;}
     }
     List<ActivitySuggestion> CombinedRecent(string? project=null)=>_repo.RecentFeed(project);
-    void RefreshRecent(){_recentFieldSettings=_repo.RecentFieldSettings();var recent=CombinedRecent();ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();RecentList.ItemsSource=recent;}    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
+    // Editable ComboBoxes with text search disabled do not synchronize selection from Text.
+    static void SetNowField(ComboBox box,string text,object? selectedItem)
+    {
+        box.SelectedItem=selectedItem;
+        box.Text=text;
+    }
+    void RestoreNowFields(string project,string epic,string activity)
+    {
+        SetNowField(ProjectBox,project,ProjectBox.Items.OfType<string>().FirstOrDefault(x=>x==project));
+        SetNowField(EpicBox,epic,EpicBox.Items.OfType<string>().FirstOrDefault(x=>x==epic));
+        var selected=ActivityBox.Items.OfType<ActivitySuggestion>().FirstOrDefault(x=>
+            x.Project==project&&x.Epic==epic&&(x.Activity==activity||x.Display==activity));
+        SetNowField(ActivityBox,activity,selected);
+    }
+    void RefreshRecent()
+    {
+        _recentFieldSettings=_repo.RecentFieldSettings();var recent=CombinedRecent();
+        var project=ProjectBox.Text;var epic=EpicBox.Text;var activity=ActivityBox.Text;
+        _updatingNowFields=true;
+        try
+        {
+            ProjectBox.ItemsSource=recent.Select(x=>x.Project).Distinct().ToList();
+            RecentList.ItemsSource=recent;
+            RestoreNowFields(project,epic,activity);
+        }
+        finally{_updatingNowFields=false;}
+    }    void RefreshAll(){_active=_repo.Active();RefreshClock();RefreshRecent();LoadDay();LoadWeek();}
     void RefreshClock()
     {
         _active=_repo.Active();
@@ -95,19 +124,35 @@ public partial class MainWindow : Window
     void OpenWidget(){if(_widget?.IsVisible==true){_widget.Activate();return;}_widget=new WidgetWindow(_repo,this);_widget.Closed+=(_,_)=>_widget=null;_widget.Show();Hide();}
     internal void ShowWidgetAtStartup()=>OpenWidget();
     public void RefreshFromWidget(){RefreshAll();RefreshReport();}
-    void StartClick(object s,RoutedEventArgs e){var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x&&(string.Equals(a,x.Activity,StringComparison.OrdinalIgnoreCase)||string.Equals(a,x.Display,StringComparison.OrdinalIgnoreCase))){p=x.Project;ep=x.Epic;a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Enter a project, epic, and activity.","TaskUp");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
+    void StartClick(object s,RoutedEventArgs e){_pendingNowComment?.Abort();var p=ProjectBox.Text.Trim();var ep=EpicBox.Text.Trim();var a=ActivityBox.Text.Trim();if(ActivityBox.SelectedItem is ActivitySuggestion x&&(string.Equals(a,x.Activity,StringComparison.OrdinalIgnoreCase)||string.Equals(a,x.Display,StringComparison.OrdinalIgnoreCase))){a=x.Activity;}if(string.IsNullOrWhiteSpace(p)||string.IsNullOrWhiteSpace(ep)||string.IsNullOrWhiteSpace(a)){MessageBox.Show("Enter a project, epic, and activity.","TaskUp");return;}_repo.Start(p,ep,a,CommentBox.Text.Trim());RefreshAll();}
     void StopClick(object s,RoutedEventArgs e){_repo.Stop();RefreshAll();}
     void ProjectChanged(object s,SelectionChangedEventArgs e)
     {
-        var p=ProjectBox.SelectedItem?.ToString()??ProjectBox.Text;var recent=CombinedRecent(p);
-        RecentList.ItemsSource=recent;ActivityBox.ItemsSource=recent;EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
-        if(recent.FirstOrDefault() is { } last){EpicBox.Text=last.Epic;ActivityBox.SelectedItem=last;ActivityBox.Text=last.Activity;}
+        // Removing a selection while typing must not refill the form.
+        if(_updatingNowFields||e.AddedItems.Count==0||ProjectBox.SelectedItem is not string project)return;
+        _pendingNowComment?.Abort();
+        var recent=CombinedRecent(project);
+        _updatingNowFields=true;
+        try
+        {
+            RecentList.ItemsSource=recent;ActivityBox.ItemsSource=recent;
+            EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
+            if(recent.FirstOrDefault() is { } last)
+            {
+                SetNowField(EpicBox,last.Epic,last.Epic);ActivityBox.SelectedItem=last;
+                ActivityBox.Text=last.Activity;CommentBox.Text=last.Comment;
+            }
+        }
+        finally{_updatingNowFields=false;}
     }
     void NowFieldTextChanged(object s,TextChangedEventArgs e)
     {
+        if(_updatingNowFields)return;
+        _pendingNowComment?.Abort();
         CommentBox.Clear();
-        Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,new Action(()=>
+        _pendingNowComment=Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle,new Action(()=>
         {
+            _pendingNowComment=null;
             var project=ProjectBox.Text.Trim();var epic=EpicBox.Text.Trim();var activity=ActivityBox.Text.Trim();
             if(ActivityBox.SelectedItem is ActivitySuggestion selected&&string.Equals(ActivityBox.Text,selected.Display,StringComparison.OrdinalIgnoreCase))activity=selected.Activity;
             if(string.IsNullOrWhiteSpace(project)||string.IsNullOrWhiteSpace(epic)||string.IsNullOrWhiteSpace(activity))return;
@@ -116,10 +161,24 @@ public partial class MainWindow : Window
     }
     void RecentSelected(object s,SelectionChangedEventArgs e)
     {
-        if(s is not ListBox list||!list.IsKeyboardFocusWithin||list.SelectedItem is not ActivitySuggestion x)return;
-        ProjectBox.Text=x.Project;EpicBox.Text=x.Epic;ActivityBox.SelectedItem=x;ActivityBox.Text=x.Activity;CommentBox.Text=x.Comment;
-        _active=_repo.Active();if(_active is not null&&string.Equals(_active.Project,x.Project,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Epic,x.Epic,StringComparison.OrdinalIgnoreCase)&&string.Equals(_active.Activity,x.Activity,StringComparison.OrdinalIgnoreCase))return;
-        StartClick(s,new RoutedEventArgs());
+        if(_updatingNowFields||s is not ListBox list||!list.IsKeyboardFocusWithin||list.SelectedItem is not ActivitySuggestion x)return;
+        ResumeRecent(x);
+    }
+    internal void ResumeRecent(ActivitySuggestion item)
+    {
+        _pendingNowComment?.Abort();
+        _updatingNowFields=true;
+        try
+        {
+            var recent=CombinedRecent(item.Project);
+
+            EpicBox.ItemsSource=recent.Select(x=>x.Epic).Distinct().ToList();
+            ActivityBox.ItemsSource=recent;
+            RestoreNowFields(item.Project,item.Epic,item.Activity);
+            CommentBox.Text=item.Comment;
+        }
+        finally{_updatingNowFields=false;}
+        StartClick(this,new RoutedEventArgs());
     }
     void FavoriteClick(object s,RoutedEventArgs e)
     {

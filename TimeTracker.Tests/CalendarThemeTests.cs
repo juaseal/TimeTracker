@@ -49,6 +49,7 @@ static class CalendarThemeTests
                         using var file=File.Create(Path.Combine(output,$"{theme}-{mode}.png"));encoder.Save(file);
                     }
                 }
+                NowFormTests.Verify();
                 host.Close();app.Shutdown();
             }
             catch(Exception ex){failure=ex;}
